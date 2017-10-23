@@ -124,8 +124,20 @@ def master(host, port):
     while(True):
         slave_fd, slave_addr = master_fd.accept()
         print "[+] Slave online : %s:%d" % (slave_addr[0], slave_addr[1])
-        slave = Slave(slave_fd)
-        slaves[slave.node_hash] = slave
+        repeat = False
+        for i in slaves.keys():
+            slave = slaves[i]
+            if slave.hostname == slave_addr[0]:
+                repeat = True
+                break
+        if repeat:
+            print "[+] Detect the same host connection, reseting..."
+            slave_fd.shutdown(socket.SHUT_RDWR)
+            slave_fd.close()
+        else:
+            print "[+] New node add to online list..."
+            slave = Slave(slave_fd)
+            slaves[slave.node_hash] = slave
 
 def show_commands():
     print "Commands : "
