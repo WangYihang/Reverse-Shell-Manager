@@ -46,6 +46,7 @@ def transfer(socket_fd):
         buffer = socket_fd.recv(buffer_size)
         if not buffer:
             print "[+] No data, breaking..."
+            break
         sys.stdout.write(buffer)
         print ""
     socket_fd.shutdown(socket.SHUT_RDWR)
