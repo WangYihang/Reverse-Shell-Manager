@@ -5,8 +5,8 @@ import threading
 import time
 import hashlib
 import sys
-
 import os
+import readline
 
 from slave import slaver
 from slave import recvall
