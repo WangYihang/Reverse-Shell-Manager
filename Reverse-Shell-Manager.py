@@ -174,6 +174,8 @@ def main():
     position = slaves[slaves.keys()[0]].node_hash # master himself
     while True:
         command = raw_input("=>") or "h"
+        if command.startswith("#"):
+            continue
         if command == "h" or command == "help" or command == "?" or command == "\n":
             show_commands()
         elif command == "l":
