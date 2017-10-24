@@ -131,7 +131,8 @@ class Slave():
 
     def remove_node(self):
         Log.error("Removing Node!")
-        slaves.pop(self.node_hash)
+        if self.node_hash in slaves.keys():
+            slaves.pop(self.node_hash)
 
 
 def master(host, port):
