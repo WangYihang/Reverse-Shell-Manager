@@ -8,6 +8,7 @@ import hashlib
 import sys
 import os
 import readline
+import signal
 
 slaves = {}
 
@@ -178,6 +179,12 @@ def show_commands():
     print "        8. [c] : command for all"
     print "        9. [q|quit|exit] : interact an shell"
 
+def signal_handler(ignum, frame):
+    print ""
+    show_commands()
+    sys.stdout.write("=>")
+    sys.stdout.flush()
+
 def node_hash(host, port):
     return md5("%s:%d" % (host, port))
 
@@ -189,6 +196,10 @@ def main():
 
     host = sys.argv[1]
     port = int(sys.argv[2])
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     print "[+] Initing..."
     master_thread = threading.Thread(target=master, args=(host, port,))
     slaver_thread = threading.Thread(target=slaver, args=(host, port, True,))
