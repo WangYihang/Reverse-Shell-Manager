@@ -83,6 +83,7 @@ class Slave():
         self.hostname, self.port = socket_fd.getpeername()
         self.node_hash = node_hash(self.hostname, self.port)
         self.interactive = False
+        self.interactive_shell_thread = None
         # self.banner = self.read_banner()
         # slave_fd.shutdown(socket.SHUT_RDWR)
         # slave_fd.close()
@@ -113,8 +114,10 @@ class Slave():
 
     def interactive_shell(self):
         self.interactive = True
-        t = threading.Thread(target=transfer, args=(self.node_hash, ))
-        t.start()
+        if self.interactive_shell_thread == None:
+            t = threading.Thread(target=transfer, args=(self.node_hash, ))
+            t.start()
+            self.interactive_shell_thread = t
         try:
             while True:
                 command = raw_input() or ("exit")
