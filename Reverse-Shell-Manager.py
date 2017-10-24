@@ -11,6 +11,7 @@ import readline
 
 slaves = {}
 
+EXIT_FLAG = False
 MAX_CONNECTION_NUMBER = 0x10
 
 def md5(data):
@@ -37,6 +38,9 @@ def slaver(host, port, fake):
     slaver_fd.connect((host, port))
     banner = "[FakeTerminal] >> "
     while True:
+        if EXIT_FLAG:
+            print "[+] Slaver function exiting..."
+            break
         command = recvuntil(slaver_fd, "\n")
         if fake:
             slaver_fd.send(banner)
@@ -56,6 +60,9 @@ def transfer(h):
     buffer_size = 0x400
     interactive_stat = True
     while True:
+        if EXIT_FLAG:
+            print "[+] Transfer function exiting..."
+            break
         interactive_stat = slave.interactive
         buffer = socket_fd.recv(buffer_size)
         if not buffer:
@@ -136,6 +143,8 @@ def master(host, port):
     master_fd.bind((host, port))
     master_fd.listen(MAX_CONNECTION_NUMBER)
     while(True):
+        if EXIT_FLAG:
+            break
         slave_fd, slave_addr = master_fd.accept()
         print "[+] Slave online : %s:%d" % (slave_addr[0], slave_addr[1])
         repeat = False
@@ -152,6 +161,9 @@ def master(host, port):
             print "[+] New node add to online list..."
             slave = Slave(slave_fd)
             slaves[slave.node_hash] = slave
+    print "[+] Master exiting..."
+    master_fd.shutdown(socket.SHUT_RDWR)
+    master_fd.close()
 
 def show_commands():
     print "Commands : "
@@ -180,6 +192,8 @@ def main():
     print "[+] Initing..."
     master_thread = threading.Thread(target=master, args=(host, port,))
     slaver_thread = threading.Thread(target=slaver, args=(host, port, True,))
+    master_thread.daemon = True
+    slaver_thread.daemon = True
     master_thread.start()
     slaver_thread.start()
     time.sleep(1)
@@ -264,6 +278,7 @@ def main():
             slave = slaves[position]
             slave.interactive_shell()
         elif command == "q" or command == "quit" or command == "exit":
+            EXIT_FLAG = True
             # TODO : release all resources before closing
             print "[+] Releasing resources..."
             for key in slaves.keys():
