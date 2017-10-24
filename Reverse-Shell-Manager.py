@@ -70,9 +70,6 @@ def transfer(h):
         socket_fd.shutdown(socket.SHUT_RDWR)
         socket_fd.close()
         slave.remove_node()
-    else:
-        print "[+] Exiting interactive shell..."
-        return
 
 class Slave():
     def __init__(self, socket_fd):
@@ -120,12 +117,13 @@ class Slave():
                 command = raw_input() or ("exit")
                 if command == "exit":
                     self.interactive = False
-                    self.socket_fd.send("echo" + "\n")
+                    self.socket_fd.send("\n")
                     break
                 self.socket_fd.send(command + "\n")
         except:
             self.remove_node()
         self.interactive = False
+        time.sleep(0.125)
 
     def remove_node(self):
         print "[+] Removing Node!"
