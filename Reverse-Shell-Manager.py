@@ -61,12 +61,8 @@ def transfer(h):
         if not slave.interactive:
             interactive_stat = False
         if not buffer:
-            if not slave.interactive:
-                interactive_stat = False
             print "[+] No data, breaking..."
             break
-        if not slave.interactive:
-            interactive_stat = False
         sys.stdout.write(buffer)
         print ""
         if not interactive_stat:
