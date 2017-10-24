@@ -56,11 +56,8 @@ def transfer(h):
     buffer_size = 0x400
     interactive_stat = True
     while True:
-        if not slave.interactive:
-            interactive_stat = False
+        interactive_stat = slave.interactive
         buffer = socket_fd.recv(buffer_size)
-        if not slave.interactive:
-            interactive_stat = False
         if not buffer:
             print "[+] No data, breaking..."
             break
@@ -83,7 +80,7 @@ class Slave():
         self.hostname, self.port = socket_fd.getpeername()
         self.node_hash = node_hash(self.hostname, self.port)
         self.interactive = False
-        self.interactive_shell_thread = None
+        # self.interactive_shell_thread = None
         # self.banner = self.read_banner()
         # slave_fd.shutdown(socket.SHUT_RDWR)
         # slave_fd.close()
@@ -114,14 +111,16 @@ class Slave():
 
     def interactive_shell(self):
         self.interactive = True
-        if self.interactive_shell_thread == None:
-            t = threading.Thread(target=transfer, args=(self.node_hash, ))
-            t.start()
-            self.interactive_shell_thread = t
+        # if self.interactive_shell_thread == None:
+        t = threading.Thread(target=transfer, args=(self.node_hash, ))
+        t.start()
+        # self.interactive_shell_thread = t
         try:
             while True:
                 command = raw_input() or ("exit")
                 if command == "exit":
+                    self.interactive = False
+                    self.socket_fd.send("echo" + "\n")
                     break
                 self.socket_fd.send(command + "\n")
         except:
