@@ -10,6 +10,8 @@ import os
 import readline
 import signal
 
+from utils import log
+
 slaves = {}
 
 EXIT_FLAG = False
