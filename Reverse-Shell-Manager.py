@@ -136,6 +136,7 @@ def show_commands():
     print "        2. [p] : print position info"
     print "        3. [i] : interactive shell"
     print "        4. [g] : goto a slave"
+    print "        5. [ ] : port forwarding (Under developing...)"
     print "        6. [gf] : get flag"
     print "        7. [gaf] : get all flag"
     print "        8. [q|quit|exit] : interact an shell"
