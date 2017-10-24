@@ -32,4 +32,4 @@ class Log():
 
     @staticmethod
     def context(context):
-        Log._print("[%s]" % (color.red(context)))
+        Log._print("%s" % (color.red(context)))

