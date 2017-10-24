@@ -211,6 +211,12 @@ def main():
     show_commands()
     position = slaves[slaves.keys()[0]].node_hash  # master himself
     while True:
+        if len(slaves.keys()) == 0:
+            Log.error("No slaves left , exiting...")
+            break
+        if not position in slaves.keys():
+            Log.error("Node is offline... Changing node...")
+            position = slaves.keys()[0]
         current_slave = slaves[position]
         context_hint = "[%s:%d] >> " % (current_slave.hostname, current_slave.port)
         Log.context(context_hint)
