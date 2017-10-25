@@ -105,15 +105,18 @@ class Slave():
         self.hostname, self.port = socket_fd.getpeername()
         self.node_hash = node_hash(self.hostname, self.port)
         self.interactive = False
-        self.host_info = location(self.hostname)
+        self.api_info = location(self.hostname)
+        self.country = self.api_info['country']
+        self.isp = self.api_info['isp']
+        self.area = self.api_info['area']
+        self.region = self.api_info['region']
+        self.city = self.api_info['city']
 
     def show_info(self):
         Log.info("Hash : %s" % (self.node_hash))
-        Log.info("IP : %s" % (self.hostname))
-        Log.info("Port : %s" % (self.port))
-        Log.info("Info : ")
-        for key in self.host_info:
-            Log.info("%s : %s" % (key, self.host_info[key]))
+        Log.info("From : %s:%d" % (self.hostname, self.port))
+        Log.info("ISP : %s-%s" % (self.country, self.isp))
+        Log.info("Location : %s-%s-%s" % (self.area, self.region, self.city))
 
     def send_command(self, command):
         try:
