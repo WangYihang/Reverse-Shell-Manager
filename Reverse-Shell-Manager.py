@@ -176,7 +176,8 @@ def show_commands():
     print "        7. [c] : command for all"
     print "        8. [setl] : set local execute"
     print "        9. [setr] : set remote execute"
-    print "        10. [q|quit|exit] : interact an shell"
+    print "        10. [d] : delete node"
+    print "        11. [q|quit|exit] : interact an shell"
 
 def signal_handler(ignum, frame):
     print ""
@@ -307,6 +308,8 @@ def main():
                 Log.info("Position changed to : %s" % (position))
         elif command == "i":
             current_slave.interactive_shell()
+        elif command == "d":
+            current_slave.remove_node()
         elif command == "q" or command == "quit" or command == "exit":
             EXIT_FLAG = True
             # TODO : release all resources before closing
