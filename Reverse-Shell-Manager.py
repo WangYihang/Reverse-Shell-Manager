@@ -232,6 +232,7 @@ def master(host, port):
             slave_fd.shutdown(socket.SHUT_RDWR)
             slave_fd.close()
         else:
+            Log.success("Add to online list...")
             slave = Slave(slave_fd)
             slaves[slave.node_hash] = slave
     Log.error("Master exiting...")
