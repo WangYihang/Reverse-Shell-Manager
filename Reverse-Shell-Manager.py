@@ -11,6 +11,9 @@ import sys
 import os
 import readline
 import signal
+import requests
+import json
+import pprint
 
 from utils.log import Log
 
@@ -18,6 +21,11 @@ slaves = {}
 
 EXIT_FLAG = False
 MAX_CONNECTION_NUMBER = 0x10
+
+def location(host):
+    response = requests.get("http://ip.taobao.com/service/getIpInfo.php?ip=%s" % (host))
+    content = response.content
+    return json.loads(content)["data"]
 
 
 def md5(data):
@@ -97,11 +105,15 @@ class Slave():
         self.hostname, self.port = socket_fd.getpeername()
         self.node_hash = node_hash(self.hostname, self.port)
         self.interactive = False
+        self.host_info = location(self.hostname)
 
     def show_info(self):
         Log.info("Hash : %s" % (self.node_hash))
         Log.info("IP : %s" % (self.hostname))
         Log.info("Port : %s" % (self.port))
+        Log.info("Info : ")
+        for key in self.host_info:
+            Log.info("%s : %s" % (key, self.host_info[key]))
 
     def send_command(self, command):
         try:
