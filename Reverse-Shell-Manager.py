@@ -49,10 +49,16 @@ def recvuntil(p, target):
 
 
 def recvall(socket_fd):
+    start_time = time.time()
+    time_out = 0x03
     data = ""
     size = 0x10
     while True:
+        if time.time() > (start_time + time_out):
+            Log.error("Reading Time out! Breaking...")
         r = socket_fd.recv(size)
+        if time.time() > (start_time + time_out):
+            Log.error("Reading Time out! Breaking...")
         data += r
         if len(r) < size:
             break
@@ -232,7 +238,6 @@ def master(host, port):
             slave_fd.shutdown(socket.SHUT_RDWR)
             slave_fd.close()
         else:
-            Log.success("Add to online list...")
             slave = Slave(slave_fd)
             slaves[slave.node_hash] = slave
     Log.error("Master exiting...")
