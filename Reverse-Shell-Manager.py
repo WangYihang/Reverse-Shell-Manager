@@ -53,9 +53,9 @@ def recvall(socket_fd):
     size = 0x100
     while True:
         r = socket_fd.recv(size)
-        data += r
         if not r:
             break
+        data += r
         if len(r) < size:
             break
     return data
@@ -141,7 +141,7 @@ class Slave():
         log_file = "./log/%s.log" % (time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))
         Log.info("Log file : %s" % (log_file))
         self.send_command(command)
-        time.sleep(0.125)
+        time.sleep(0.5)
         Log.info("Receving data from socket...")
         result = recvall(self.socket_fd)
         Log.success(result)
@@ -155,7 +155,7 @@ class Slave():
 
     def send_command_print(self, command):
         self.send_command(command)
-        time.sleep(0.125)
+        time.sleep(0.5)
         Log.info("Receving data from socket...")
         result = recvall(self.socket_fd)
         Log.success(result)
