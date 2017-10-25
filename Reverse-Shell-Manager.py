@@ -24,9 +24,13 @@ EXIT_FLAG = False
 MAX_CONNECTION_NUMBER = 0x10
 
 def location(host):
-    response = requests.get("http://ip.taobao.com/service/getIpInfo.php?ip=%s" % (host))
-    content = response.content
-    return json.loads(content)["data"]
+    try:
+        response = requests.get("http://ip.taobao.com/service/getIpInfo.php?ip=%s" % (host))
+        content = response.content
+        return json.loads(content)["data"]
+    except Exception as e:
+        Log.error(str(e))
+        return {"data":"error"}
 
 
 def md5(data):
