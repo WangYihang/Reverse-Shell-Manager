@@ -283,15 +283,16 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    Log.info("Starting server...")
     master_thread = threading.Thread(target=master, args=(host, port,))
-    Log.info("Connecting to localhost server...")
     slaver_thread = threading.Thread(target=slaver, args=(host, port, True,))
     master_thread.daemon = True
     slaver_thread.daemon = True
+    Log.info("Starting server...")
     master_thread.start()
+    time.sleep(0.25)
+    Log.info("Connecting to localhost server...")
     slaver_thread.start()
-    time.sleep(1)
+    time.sleep(0.25)
     show_commands()
     position = slaves[slaves.keys()[0]].node_hash  # master himself
     while True:
