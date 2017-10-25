@@ -50,7 +50,7 @@ def recvuntil(p, target):
 
 def recvall(socket_fd):
     data = ""
-    size = 0x10
+    size = 0x100
     while True:
         r = socket_fd.recv(size)
         data += r
