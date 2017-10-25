@@ -314,17 +314,17 @@ def main():
         elif command == "p":
             current_slave.show_info()
         elif command == "c":
-            command = raw_input("Input command (uname -r) : ") or ("uname -r")
-            Log.info("Command : %s" % (command))
+            cmd = raw_input("Input command (uname -r) : ") or ("uname -r")
+            Log.info("Command : %s" % (cmd))
             for i in slaves.keys():
                 slave = slaves[i]
-                result = slave.send_command_print(command)
+                result = slave.send_command_print(cmd)
         elif command == "cl":
-            command = raw_input("Input command (uname -r) : ") or ("uname -r")
-            Log.info("Command : %s" % (command))
+            cmd = raw_input("Input command (uname -r) : ") or ("uname -r")
+            Log.info("Command : %s" % (cmd))
             for i in slaves.keys():
                 slave = slaves[i]
-                result = slave.send_command_log(command)
+                result = slave.send_command_log(cmd)
         elif command == "g":
             input_node_hash = raw_input(
                 "Please input target node hash : ") or position
