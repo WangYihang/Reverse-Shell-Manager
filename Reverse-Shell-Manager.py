@@ -18,6 +18,7 @@ import pprint
 from utils.log import Log
 
 slaves = {}
+masters = {}
 
 EXIT_FLAG = False
 MAX_CONNECTION_NUMBER = 0x10
@@ -230,7 +231,8 @@ def show_commands():
     print "        10. [d] : delete node"
     print "        10. [ac] : auto connection"
     print "        11. [aac] : all node auto connction"
-    print "        12. [q|quit|exit] : exit"
+    print "        12. [nm] : listen another port"
+    print "        13. [q|quit|exit] : exit"
 
 def signal_handler(ignum, frame):
     print ""
@@ -374,6 +376,14 @@ def main():
             for i in slaves.keys():
                 slave = slaves[i]
                 slave.auto_connect(target_host, target_port)
+        elif command == "nm":
+            new_master_host = raw_input("Input new master's host (0.0.0.0): ") or ("0.0.0.0")
+            new_master_port = int(raw_input("Input new master's port (8090): ") or ("8090"))
+            new_master_thread = threading.Thread(target=master, args=(new_master_host, new_master_port,))
+            new_master_thread.daemon = True
+            new_master_thread.start()
+            # TODO : OO
+            # TODO : Master Management
         elif command == "q" or command == "quit" or command == "exit":
             EXIT_FLAG = True
             # TODO : release all resources before closing
