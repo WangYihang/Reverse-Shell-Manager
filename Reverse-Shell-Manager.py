@@ -136,7 +136,7 @@ class Slave():
             return False
 
     def send_command_log(self, command):
-        log_file = "%s.log" % (time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))
+        log_file = "./log/%s.log" % (time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))
         Log.info("Log file : %s" % (log_file))
         self.send_command(command)
         time.sleep(0.125)
