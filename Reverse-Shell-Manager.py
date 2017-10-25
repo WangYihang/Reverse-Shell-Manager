@@ -146,6 +146,7 @@ class Slave():
         Log.info("Log file : %s" % (log_file))
         self.send_command(command)
         time.sleep(0.125)
+        Log.info("Receving data from socket...")
         result = recvall(self.socket_fd)
         Log.success(result)
         with open(log_file, "a+") as f:
@@ -159,6 +160,7 @@ class Slave():
     def send_command_print(self, command):
         self.send_command(command)
         time.sleep(0.125)
+        Log.info("Receving data from socket...")
         result = recvall(self.socket_fd)
         Log.success(result)
 
