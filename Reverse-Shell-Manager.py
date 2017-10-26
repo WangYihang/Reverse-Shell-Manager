@@ -354,7 +354,7 @@ def main():
             EXEC_LOCAL = True
         elif command == "setr":
             EXEC_LOCAL = False
-        elif command == "fag":
+        elif command == "gaf":
             flag_path = raw_input(
                 "Input flag path (/flag.txt) : ") or ("/flag.txt")
             box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
@@ -376,7 +376,7 @@ def main():
                     Log.error("Executing command failed! Connection aborted! Node removed!")
                     position = slaves.keys()[0]
                     Log.info("Position changed to : %s" % (position))
-        elif command == "fg":
+        elif command == "gf":
             flag_path = raw_input(
                 "Input flag path (/flag.txt) : ") or ("/flag.txt")
             box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
