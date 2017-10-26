@@ -10,3 +10,11 @@ A reverse shell manager via terminal
 
 > https://youtu.be/AoS-q1MGw30  
 > https://asciinema.org/a/143640
+
+# TODO
+- [ ] 实现添加 crontab 的功能
+
+# Bugs
+
+- [ ] socket 在 recv 的时候会出现假死的情况 (暂时不能复现)
+- [ ] 主机上线但是并没有被加入列表 (暂时不能复现)
