@@ -13,6 +13,7 @@ A reverse shell manager via terminal
 
 # TODO
 - [ ] 实现添加 crontab 的功能
+- [ ] Master 面向对象
 
 # Bugs
 
