@@ -326,9 +326,9 @@ def main():
             Log.error("Node is offline... Changing node...")
             position = slaves.keys()[0]
         current_slave = slaves[position]
-        context_hint = "[%s:%d] >> " % (current_slave.hostname, current_slave.port)
+        context_hint = "[%s:%d]" % (current_slave.hostname, current_slave.port)
         Log.context(context_hint)
-        command = raw_input() or "h"
+        command = raw_input(" >> ") or "h"
         if command.startswith("#"):
             continue
         if command == "h" or command == "help" or command == "?" or command == "\n":
