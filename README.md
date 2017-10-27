@@ -33,6 +33,8 @@ drink(s) in return.
 Red Bull
 JDB
 Coffee
+Sprite
+Cola
 Harbin Beer
 etc
 
