@@ -20,3 +20,18 @@ A reverse shell manager via terminal
 
 - [ ] socket 在 recv 的时候会出现假死的情况 (暂时不能复现)
 - [ ] 主机上线但是并没有被加入列表 (暂时不能复现)
+
+# LICENSE
+
+```
+/*
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <wangyihanger@gmail.com> wrote this file.  As long as you retain this notice you
+ * can do whatever you want with this stuff. If we meet some day, and you think
+ * this stuff is worth it, you can buy me a beer in return.
+ * 
+ * WangYihang
+ * ----------------------------------------------------------------------------
+ */
+ ```
