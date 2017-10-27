@@ -24,15 +24,12 @@ A reverse shell manager via terminal
 # LICENSE
 
 ```
-/* ----------------------------------------------------------------------------
- * "THE (COFFEE)WARE LICENSE" (Rev. 1):
- * 
- * <wangyihanger@gmail.com> 
- * wrote this file. As long as you retain this notice you can do whatever you
- * want with this stuff. If we meet some day, and you think this stuff is
- * worth it, you can buy me the above drink(s) in return.
- *
- * Wang Yihang
- * ---------------------------------------------------------------------------- 
- */
+"THE (COFFEE)WARE LICENSE" (Rev. 1):
+
+<wangyihanger@gmail.com> 
+wrote this file. As long as you retain this notice you can do whatever you
+want with this stuff. If we meet some day, and you think this stuff is
+worth it, you can buy me the above drink(s) in return.
+
+Wang Yihang
 ```
