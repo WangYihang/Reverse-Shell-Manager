@@ -27,15 +27,6 @@ masters = {}
 EXIT_FLAG = False
 MAX_CONNECTION_NUMBER = 0x10
 
-def location(host):
-    try:
-        response = requests.get("http://ip.taobao.com/service/getIpInfo.php?ip=%s" % (host))
-        content = response.content
-        return json.loads(content)["data"]
-    except Exception as e:
-        Log.error(str(e))
-        return {"data":"error"}
-
 
 def md5(data):
     return hashlib.md5(data).hexdigest()
@@ -116,12 +107,21 @@ class Slave():
         self.hostname, self.port = socket_fd.getpeername()
         self.node_hash = node_hash(self.hostname, self.port)
         self.interactive = False
-        self.api_info = location(self.hostname)
+        self.api_info = self.location(self.hostname)
         self.country = self.api_info['country']
         self.isp = self.api_info['isp']
         self.area = self.api_info['area']
         self.region = self.api_info['region']
         self.city = self.api_info['city']
+
+    def location(self, host):
+        try:
+            response = requests.get("http://ip.taobao.com/service/getIpInfo.php?ip=%s" % (host), timeout=0.5)
+            content = response.content
+            return json.loads(content)["data"]
+        except Exception as e:
+            Log.error(str(e))
+            return {"data":"error", 'country': 'Unknown_country','isp': 'Unknown_isp','area': 'Unknown_area','region': 'Unknown_region','city': 'Unknown_city',}
 
     def show_info(self):
         Log.info("Hash : %s" % (self.node_hash))
@@ -312,10 +312,9 @@ def main():
     slaver_thread.daemon = True
     Log.info("Starting server...")
     master_thread.start()
-    time.sleep(0.25)
     Log.info("Connecting to localhost server...")
     slaver_thread.start()
-    time.sleep(0.5)
+    time.sleep(0.75)
     show_commands()
     position = slaves[slaves.keys()[0]].node_hash  # master himself
     while True:
