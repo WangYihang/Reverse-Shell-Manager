@@ -12,12 +12,13 @@ A reverse shell manager via terminal
 # TODO
 - [x] 实现添加 crontab 的功能
 - [x] 实现删除 crontab 的功能
+- [ ] 使用异步 HTTP 库 grequests
 - [ ] Master 面向对象
 
 # Bugs
 
+- [x] 主机上线但是并没有被加入列表
 - [ ] socket 在 recv 的时候会出现假死的情况 (暂时不能复现)
-- [ ] 主机上线但是并没有被加入列表 (暂时不能复现)
 
 # LICENSE
 
