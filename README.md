@@ -14,6 +14,7 @@ A reverse shell manager via terminal
 - [x] 实现删除 crontab 的功能
 - [ ] 使用异步 HTTP 库 grequests
 - [ ] Master 面向对象
+- [ ] 抛弃多线程 , 使用 select/epoll 来解决并发问题
 
 # Bugs
 
