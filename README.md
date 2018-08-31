@@ -1,7 +1,7 @@
 # Reverse Shell Manager
 
 ```
-A multiple reverse shell session/client manager via terminal
+A multiple reverse shell sessions/clients manager via terminal
 ```
 
 #### Simple Example Video 
