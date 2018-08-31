@@ -4,10 +4,13 @@
 A multiple reverse shell session/client manager via terminal
 ```
 
-# Simple Video
+# Simple Example Video 
 
+[![asciicast](https://asciinema.org/a/143640.png)](https://asciinema.org/a/143640)
+
+# YouTube Example
 > https://youtu.be/AoS-q1MGw30  
-> https://asciinema.org/a/143640
+
 
 # TODO
 - [x] 实现添加 crontab 的功能
