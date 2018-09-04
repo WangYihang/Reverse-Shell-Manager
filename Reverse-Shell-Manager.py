@@ -32,7 +32,7 @@ MAX_CONNECTION_NUMBER = 0x10
 def submit_flag(flag):
     try:
         # TODO
-        url = "http://192.168.1.1/?flag=%s" % (flag)
+        url = "http://127.0.0.1:5000/?flag=%s" % (flag)
         print requests.get(url).content
     except Exception as e:
         print(e)
@@ -443,7 +443,7 @@ print result
                     # exit(0)
                     Log.info("Command : %s" % (payload))
                     result = slave.system_token(payload)
-                    flag = decode_flag(result.replace("\n", "").replace("\r",""))
+                    flag = decode_flag(result.replace("\n", "").replace("\r","")).replace("\n", "").replace("\r", "")
                     Log.info("FLAG: %s" % flag)
                     submit_flag(flag)
                     Log.info("Submitted")
