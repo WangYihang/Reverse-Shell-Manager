@@ -31,15 +31,9 @@ MAX_CONNECTION_NUMBER = 0x10
 
 def submit_flag(flag):
     try:
-        url = "http://127.0.0.1"
-        params = {
-            "flag":flag,
-            "token":"REPLACE_TOKEN"
-        }
-        cookies = {
-            "PHPSESSID": "dsadsad"        
-        }
-        print requests.post(url, params, cookies=cookies).content
+        # TODO
+        url = "http://192.168.1.1/?flag=%s" % (flag)
+        print requests.get(url).content
     except Exception as e:
         print(e)
 
