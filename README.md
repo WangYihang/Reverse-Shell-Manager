@@ -4,6 +4,14 @@
 A multiple reverse shell sessions/clients manager via terminal
 ```
 
+#### New version is under development
+
+* Platypus
+  * More stable
+  * More features
+  * Upgrade common reverse shell session to full interactive seession
+  * ...
+
 #### Attacker side
 ```
 python Reverse-Shell-Manager.py 0.0.0.0 4444
