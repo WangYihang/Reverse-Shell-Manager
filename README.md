@@ -10,6 +10,8 @@ A multiple reverse shell sessions/clients manager via terminal
   * More stable
   * More features
   * Upgrade common reverse shell session to full interactive seession
+  * Reverse shell as a Service
+  * RESTful API
   * ...
 
 #### Attacker side
