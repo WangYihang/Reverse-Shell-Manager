@@ -3,10 +3,9 @@
 ```
 A multiple reverse shell sessions/clients manager via terminal
 ```
+**New version released at https://github.com/WangYihang/Platypus**
 
-#### New version is under development
-
-* Platypus
+#### [**Platypus**](https://github.com/WangYihang/Platypus)
   * More stable
   * More features
   * Upgrade common reverse shell session to full interactive seession
