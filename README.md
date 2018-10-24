@@ -3,7 +3,8 @@
 ```
 A multiple reverse shell sessions/clients manager via terminal
 ```
-**New version released at https://github.com/WangYihang/Platypus**
+**This project will not continue develope anymore.**
+**The reborn project (Platypus) will be released at https://github.com/WangYihang/Platypus**
 
 #### [**Platypus**](https://github.com/WangYihang/Platypus)
   * More stable
