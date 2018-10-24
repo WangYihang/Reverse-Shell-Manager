@@ -4,7 +4,7 @@
 A multiple reverse shell sessions/clients manager via terminal
 ```
 **This project will not continue develope anymore.**  
-**The reborn project (Platypus) will be released at https://github.com/WangYihang/Platypus**  
+**The reborn project (Platypus) has been released at https://github.com/WangYihang/Platypus**  
 
 #### [**Platypus**](https://github.com/WangYihang/Platypus)
   * More stable
