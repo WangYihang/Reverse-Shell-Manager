@@ -3,8 +3,10 @@
 ```
 A multiple reverse shell sessions/clients manager via terminal
 ```
+
+#### :heavy_exclamation_mark: :heavy_exclamation_mark: :heavy_exclamation_mark: 
 **This project will not continue develope anymore.**  
-**The reborn project (Platypus) has been released at https://github.com/WangYihang/Platypus**  
+**The next generation of this project (Platypus) has been released at https://github.com/WangYihang/Platypus**  
 
 #### [**Platypus**](https://github.com/WangYihang/Platypus)
   * More stable
