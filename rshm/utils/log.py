@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import color
+from rshm.utils import color
 import sys
 
 class Log():

@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "rshm"
+version = "0.1.0"
+description = ""
+authors = ["Yihang Wang <wangyihanger@gmail.com>"]
+readme = "README.md"
+packages = [{include = "reverse_shell_manager"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.31.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
